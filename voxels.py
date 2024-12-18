@@ -73,6 +73,15 @@ class Voxels():
                 voxel_IDs=self.voxel_IDs,
                 include_touching=include_touching))
         return
+    
+    def assign_voxel_ID_to_given_COG(self, COG, voxel_idx_to_ID=None):
+        return assign_voxel_ID_to_given_COG(
+            COG,
+            self.xbounds,
+            self.ybounds,
+            self.zbounds,
+            self.box,
+            voxel_idx_to_ID=voxel_idx_to_ID)
 
 
 def parse_voxel_inputs(            
@@ -261,3 +270,37 @@ def find_voxel_neighbors_with_shaft_overlap_method(
             
     return voxel_neighbors
     
+
+def assign_voxel_ID_to_given_COG(
+        COG,
+        xbounds,
+        ybounds,
+        zbounds,
+        box, 
+        voxel_idx_to_ID=None):
+    
+    # COG s/b flattened array
+    if type(COG) is list:
+        COG = np.array(COG)
+    COG = COG.flatten()
+
+    # wrap COG into box
+    for i in range(3):
+        while COG[i] < box[i][0]:
+            COG[i] += box[i][1]-box[i][0]
+        while COG[i] > box[i][1]:
+            COG[i] -= box[i][1]-box[i][0]
+
+    # find x/y/z indices, then calculate voxel index assuming voxel
+    # indices are assigned for x, then y, then z
+    xidx = np.argwhere(COG[0] >= xbounds[:-1])[-1][0]
+    yidx = np.argwhere(COG[1] >= ybounds[:-1])[-1][0]
+    zidx = np.argwhere(COG[2] >= zbounds[:-1])[-1][0]
+    vidx = xidx*(len(ybounds)-1)*(len(zbounds)-1) + yidx*(len(zbounds)-1) + zidx
+
+    # if voxel_idx_to_ID is given, return the ID
+    if voxel_idx_to_ID is not None:
+        return voxel_idx_to_ID[vidx]
+    
+    # otherwise, assume idx = ID
+    return vidx

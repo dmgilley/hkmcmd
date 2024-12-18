@@ -168,39 +168,39 @@ class AtomList():
         self.q4=np.array(list(self.q4)+list(q4))
 
     # Get ids based on a specific value of an attribute
-    def get_idx(self, ids=[], lammps_type=[], taffi_type=[], element=[], mass=[], charge=[], mol_id=[], mol_type=[]):
-        if len(ids):
+    def get_idx(self, ids=None, lammps_type=None, taffi_type=None, element=None, mass=None, charge=None, mol_id=None, mol_type=None):
+        if ids is not None:
             return [_ for _,v in enumerate(self.ids) if v in ids]
-        if lammps_type!=[]:
+        if lammps_type is not None:
             return [_ for _,v in enumerate(self.lammps_type) if v in lammps_type]
-        if taffi_type!=[]:
+        if taffi_type is not None:
             return [_ for _,v in enumerate(self.taffi_type) if v in taffi_type]
-        if element!=[]:
+        if element is not None:
             return [_ for _,v in enumerate(self.element) if v in element]
-        if mass!=[]:
+        if mass is not None:
             return [_ for _,v in enumerate(self.mass) if v in mass]
-        if charge!=[]:
+        if charge is not None:
             return [_ for _,v in enumerate(self.charge) if v in charge]
-        if mol_id!=[]:
+        if mol_id is not None:
             return [_ for _,v in enumerate(self.mol_id) if v in mol_id]
-        if mol_type!=[]:
+        if mol_type is not None:
             return [_ for _,v in enumerate(self.mol_type) if v in mol_type]
 
     # Get idx grouped according to an attribute
     def get_idx_group(self, lammps_type=None, taffi_type=None, element=None, mass=None, charge=None, mol_id=None, mol_type=None):
-        if lammps_type!=None:
+        if lammps_type is not None:
             return {i:[_ for _,v in enumerate(self.lammps_type) if v==i] for i in set(self.lammps_type)}
-        if taffi_type!=None:
+        if taffi_type is not None:
             return {i:[_ for _,v in enumerate(self.taffi_type) if v==i] for i in set(self.taffi_type)}
-        if element!=None:
+        if element is not None:
             return {i:[_ for _,v in enumerate(self.element) if v==i] for i in set(self.element)}
-        if mass!=None:
+        if mass is not None:
             return {i:[_ for _,v in enumerate(self.mass) if v==i] for i in set(self.mass)}
-        if charge!=None:
+        if charge is not None:
             return {i:[_ for _,v in enumerate(self.charge) if v==i] for i in set(self.charge)}
-        if mol_id!=None:
+        if mol_id is not None:
             return {i:[_ for _,v in enumerate(self.mol_id) if v==i] for i in set(self.mol_id)}
-        if mol_type!=None:
+        if mol_type is not None:
             return {i:[_ for _,v in enumerate(self.mol_type) if v==i] for i in set(self.mol_type)}
 
     # Delete entries from all attributes at the supplied indices 

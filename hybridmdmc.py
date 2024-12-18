@@ -14,7 +14,7 @@ from hybrid_mdmc.classes import *
 from hybrid_mdmc.parsers import *
 from hybrid_mdmc.kmc import *
 from hybrid_mdmc.functions import *
-from hybrid_mdmc.calc_voxels import *
+#from hybrid_mdmc.calc_voxels import *
 from hybrid_mdmc.voxels import Voxels
 from hybrid_mdmc.diffusion import Diffusion
 
@@ -54,20 +54,18 @@ def main(argv):
 
     # Create a voxels dictionary and related voxel mapping parameters
     # using the calc_voxels function and the datafile information.
-    voxels = calc_voxels(
-        args.number_of_voxels, box,
-        xbounds=args.x_bounds,
-        ybounds=args.y_bounds,
-        zbounds=args.z_bounds)
-    voxelsmap, voxelsx, voxelsy, voxelsz = voxels2voxelsmap(voxels)
-    voxelID2idx = {k: idx for idx, k in enumerate(sorted(list(voxels.keys())))}
-    atomtypes2moltype = {}
-    for k, v in masterspecies.items():
-        atomtypes2moltype[tuple(sorted([i[2] for i in v['Atoms']]))] = k
+    #voxels = calc_voxels(
+    #    args.number_of_voxels, box,
+    #    xbounds=args.x_bounds,
+    #    ybounds=args.y_bounds,
+    #    zbounds=args.z_bounds)
+    #voxelsmap, voxelsx, voxelsy, voxelsz = voxels2voxelsmap(voxels)
+    #voxelID2idx = {k: idx for idx, k in enumerate(sorted(list(voxels.keys())))}
+    voxels_datafile = Voxels(box, args.number_of_voxels)
+    atomtypes2moltype = {tuple(sorted([i[2] for i in v['Atoms']])):k for k,v in masterspecies.items()}
 
     # Create and populate an instance of the "MoleculeList" class.
-    molecules = gen_molecules(atoms, atomtypes2moltype,
-                              voxelsmap, voxelsx, voxelsy, voxelsz)
+    molecules = gen_molecules(atoms, atomtypes2moltype, voxels_datafile)
 
     # Check for consistency among the tracking files.
     tfs = [
@@ -196,14 +194,13 @@ def main(argv):
     # If requested, calculate the diffusion rate for each species.
     #reactivespecies = {k:v for k,v in masterspecies.items() if k in set([i for l in [_['reactant_molecules'] for _ in rxndata.values()] for i in l])}
     diffusion_rate = {
-        _: np.full((len(voxels), len(voxels)), fill_value=np.inf)
+        _: np.full((len(voxels_datafile.voxel_IDs), len(voxels_datafile.voxel_IDs)), fill_value=np.inf)
         #for _ in reactivespecies.keys()
         for _ in masterspecies.keys()
     }
     if args.debug:
         breakpoint()
     if args.well_mixed is False:
-        voxels_datafile = Voxels(box, args.number_of_voxels)
         diffusion = Diffusion(
             'toy320.60A',
             args.filename_trajectory,
@@ -216,7 +213,7 @@ def main(argv):
         diffusion.perform_random_walks(number_of_steps=864,species='A')
         diffusion.calculate_average_first_time_between_positions(species='A')
         diffusion.calculate_diffusion_rates(species='A')
-        diffusion_rate['A'] = diffusion.diffusion_rate
+        diffusion_rate['A'] = diffusion.diffusion_rates['A']
 
     # Append the diffusion file
     with open(args.filename_diffusion,'a') as f:
@@ -260,7 +257,7 @@ def main(argv):
             breakpoint()
 
         rxns = get_rxns_serial(
-            molecules, voxelID2idx, diffusion_rate,
+            molecules, voxels_datafile, diffusion_rate,
             rxnscaling, rxndata, args.diffusion_cutoff)
 
 
@@ -307,8 +304,7 @@ def main(argv):
             breakpoint()
 
         # Create new molecules object
-        molecules = gen_molecules(
-            atoms, atomtypes2moltype, voxelsmap, voxelsx, voxelsy, voxelsz)
+        molecules = gen_molecules(atoms, atomtypes2moltype, voxels_datafile)
 
         # Update the progression objects, if rate scaling is being performed
         if args.scalerates:
