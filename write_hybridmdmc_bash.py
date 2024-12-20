@@ -96,6 +96,17 @@ for i in `seq 0 {}`; do
 
     echo "Loop step ${{i}} ($(date)) "
 
+
+    # Calculate MSD
+    echo "  calculating msd ($(date)) ..."
+    python ~/bin/hybrid_mdmc/calculate_MSD.py {} 'A' -filename_notebook '{}_notebook.xlsx' -frames '500 10 1000' -filename_output {}.msdoutput.${{i}}.txt
+    retVal=$?
+    if [ $retVal -ne 0 ]; then
+        exit $retVal
+    fi
+
+
+            
     # Run RMD script
     echo "  running hybridmdmc ($(date)) ..."
     python {} {} {} -filename_notebook {} -diffusion_step ${{i}}
@@ -124,7 +135,7 @@ echo "End time: $(date)"
     args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
     args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
     args.reactive_loops,
-    #args.prefix, args.prefix, args.prefix,
+    args.prefix, args.system, args.prefix,
     mainscript, args.system, args.prefix, args.filename_notebook,
     args.cores, args.prefix, args.prefix,
 ))
@@ -134,11 +145,3 @@ echo "End time: $(date)"
 
 if __name__ == '__main__':
     main(sys.argv[1:])
-
-    # Calculate MSD
-#    echo "  calculating msd ($(date)) ..."
-#    python ~/bin/hybrid_mdmc/calculate_MSD.py {}.in.data {}.diffusion.lammpstrj 1 -frames '500 10 1000' -filename_output {}.msdoutput.${{i}}.txt
-#    retVal=$?
-#    if [ $retVal -ne 0 ]; then
-#        exit $retVal
-#    fi
