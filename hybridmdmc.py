@@ -14,7 +14,6 @@ from hybrid_mdmc.classes import *
 from hybrid_mdmc.parsers import *
 from hybrid_mdmc.kmc import *
 from hybrid_mdmc.functions import *
-#from hybrid_mdmc.calc_voxels import *
 from hybrid_mdmc.voxels import Voxels
 from hybrid_mdmc.diffusion import Diffusion
 
@@ -52,15 +51,7 @@ def main(argv):
     if args.debug:
         breakpoint()
 
-    # Create a voxels dictionary and related voxel mapping parameters
-    # using the calc_voxels function and the datafile information.
-    #voxels = calc_voxels(
-    #    args.number_of_voxels, box,
-    #    xbounds=args.x_bounds,
-    #    ybounds=args.y_bounds,
-    #    zbounds=args.z_bounds)
-    #voxelsmap, voxelsx, voxelsy, voxelsz = voxels2voxelsmap(voxels)
-    #voxelID2idx = {k: idx for idx, k in enumerate(sorted(list(voxels.keys())))}
+    # Create the Voxels object
     voxels_datafile = Voxels(box, args.number_of_voxels)
     atomtypes2moltype = {tuple(sorted([i[2] for i in v['Atoms']])):k for k,v in masterspecies.items()}
 
@@ -71,11 +62,11 @@ def main(argv):
     tfs = [
         os.path.exists(f)
         for fidx, f in enumerate([args.filename_concentration, args.filename_scale, args.filename_log, args.filename_diffusion])
-        if [True, args.scalerates, args.log, True][fidx]
+        if [True, args.scalerates, args.log, args.track_diffusion][fidx]
     ]
     if len(set(tfs)) != 1:
         tf_names = [args.filename_concentration, args.filename_scale, args.filename_log, args.filename_diffusion]
-        tf_requested = [True, args.scalerates, args.log, True]
+        tf_requested = [True, args.scalerates, args.log, args.track_diffusion]
         print('Error! Inconsistent exsitence of tracking files.')
         print('  File Name                Requested   Exists')
         for idx in range(len(tf_names)):
@@ -93,7 +84,7 @@ def main(argv):
         (True, args.filename_concentration),
         (args.scalerates, args.filename_scale),
         (args.log, args.filename_log),
-        (True, args.filename_diffusion)
+        (args.track_diffusion, args.filename_diffusion)
     ]:
         if f[0]:
             lines, new = [], False
@@ -192,35 +183,39 @@ def main(argv):
         breakpoint()
 
     # If requested, calculate the diffusion rate for each species.
-    #reactivespecies = {k:v for k,v in masterspecies.items() if k in set([i for l in [_['reactant_molecules'] for _ in rxndata.values()] for i in l])}
     diffusion_rate = {
         _: np.full((len(voxels_datafile.voxel_IDs), len(voxels_datafile.voxel_IDs)), fill_value=np.inf)
-        #for _ in reactivespecies.keys()
         for _ in masterspecies.keys()
     }
+    if args.well_mixed is False:
+        if args.track_diffusion is True:
+            diffusion = Diffusion(
+                'toy320.60A',
+                args.filename_trajectory,
+                atoms,
+                molecules,
+                voxels_datafile,
+                time_conversion=args.lammps_time_units_to_seconds_conversion)
+            diffusion.parse_trajectory_file(start=0, end=-1, every=1)
+            diffusion.calculate_direct_voxel_transition_rates()
+            diffusion.perform_random_walks(number_of_steps=864,species='A')
+            diffusion.calculate_average_first_time_between_positions(species='A')
+            diffusion.calculate_diffusion_rates(species='A')
+            diffusion_rate['A'] = diffusion.diffusion_rates['A']
+        else:
+            diffusion_rate = parse_diffusion_file(args.filename_diffusion)
+            diffusion_rate = {k:v[0,:,:] for k,v in diffusion_rate.items()}
+
     if args.debug:
         breakpoint()
-    if args.well_mixed is False:
-        diffusion = Diffusion(
-            'toy320.60A',
-            args.filename_trajectory,
-            atoms,
-            molecules,
-            voxels_datafile,
-            time_conversion=args.lammps_time_units_to_seconds_conversion)
-        diffusion.parse_trajectory_file(start=0, end=-1, every=1)
-        diffusion.calculate_direct_voxel_transition_rates()
-        diffusion.perform_random_walks(number_of_steps=864,species='A')
-        diffusion.calculate_average_first_time_between_positions(species='A')
-        diffusion.calculate_diffusion_rates(species='A')
-        diffusion_rate['A'] = diffusion.diffusion_rates['A']
 
     # Append the diffusion file
-    with open(args.filename_diffusion,'a') as f:
-        for k,v in sorted(diffusion_rate.items()):
-            f.write('\nDiffusion Rates for {}\n'.format(k))
-            for row in v:
-                f.write('{}\n'.format(' '.join([str(_) for _ in row])))
+    if args.track_diffusion is True:
+        with open(args.filename_diffusion,'a') as f:
+            for k,v in sorted(diffusion_rate.items()):
+                f.write('\nDiffusion Rates for {}\n'.format(k))
+                for row in v:
+                    f.write('{}\n'.format(' '.join([str(_) for _ in row])))
 
     # Begin the KMC loop
     molecount_starting, molecount_current = len(

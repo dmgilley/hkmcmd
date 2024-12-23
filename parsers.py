@@ -468,3 +468,27 @@ def read_notebook(filename_notebook):
             dict_['cycled_MD_init_dict'][row[0]] = row[1]
 
     return dict_
+
+
+def parse_diffusion_file(filename):
+    data,diffusion_step,species = {},None,None
+    with open(filename,'r') as f:
+        for line in f:
+            fields = line.split()
+            if fields == []: continue
+            if fields[0] == '#': continue
+            if '---' in fields[0]: continue
+            if fields[0] == 'DiffusionStep':
+                diffusion_step = int(fields[1])
+                data[diffusion_step] = {}
+                continue
+            if fields[0] == 'Diffusion':
+                species = fields[3]
+                data[diffusion_step][species] = []
+                continue
+            if species is not None:
+                data[diffusion_step][species].append([float(_) for _ in fields])
+                continue
+    diffusion_steps = sorted(list(data.keys()))
+    species = sorted(list(data[diffusion_steps[0]].keys()))
+    return {sp:np.array([data[ds][sp] for ds in diffusion_steps]) for sp in species}

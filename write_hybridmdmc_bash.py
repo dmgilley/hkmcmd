@@ -34,18 +34,25 @@ def main(argv):
                         help='Time limit of run (str). Default: 03:00:00')
     parser.add_argument('-reactive_loops', dest='reactive_loops', type=int, default=2000,
                         help='Number of reactive loops.')
-    #parser.add_argument('--serial', action='store_true')
-    #parser.add_argument('--synchronousparallel', dest='serial', action='store_false')
-    #parser.set_defaults(serial=True)
+    parser.add_argument('--track_diffusion', dest='track_diffusion', action='store_true',
+                        help='Track diffusion.')
+    parser.add_argument('--no-track_diffusion', dest='track_diffusion', action='store_false')
+    parser.add_argument('--calculate_msd', dest='calculate_msd', action='store_true',
+                        help='Calculate MSD.')
+    parser.add_argument('--no-calculate_msd', dest='calculate_msd', action='store_false')
+    parser.set_defaults(track_diffusion=False)
+    parser.set_defaults(calculate_msd=True)
     
     # Parse the line arguments
     args = parser.parse_args()
+    if args.filename_notebook == 'default':
+        args.filename_notebook = args.system + '_notebook.xlsx'
     
     mainscript = '~/bin/hybrid_mdmc/hybridmdmc.py'
-    #if args.serial:
-    #    mainscript = '~/bin/hybrid_mdmc/hybridmdmc_serial.py'
 
-    # Write the bash file
+    #############################################################
+    # Header
+    #############################################################
     with open(args.prefix+'_hmdmc.sh', 'w') as f:
         f.write(
             """\
@@ -91,23 +98,78 @@ cp {}.thermo.avg            {}_prep.thermo.avg
 cp {}.shrink.lammpstrj      {}_prep.shrink.lammpstrj
 cp {}.diffusion.lammpstrj   {}_prep.diffusion.lammpstrj
 
+""".format(
+        args.prefix+'_hmdmc', args.prefix+'_hmdmc', args.prefix+'_hmdmc', args.queue, args.nodes, args.cores, args.timelim,
+        args.system, args.prefix, args.filename_notebook,
+        args.cores, args.prefix, args.prefix,
+        args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
+        args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
+        ))
+        #############################################################
+
+
+
+        
+        #############################################################
+        # Diffusion if requested
+        #############################################################
+        if args.track_diffusion is False:
+            f.write(
+                """\
+# Calculate the first diffusion
+python ~/bin/hybrid_mdmc/calculate_diffusion.py {} {} -filename_notebook {} -diffusion_species 'A'
+
+""".format(
+            args.system, args.prefix, args.filename_notebook))
+        #############################################################
+
+
+
+
+        #############################################################
+        # Begin loop
+        #############################################################
+        f.write(
+            """\
 # Reactive loop
-for i in `seq 0 {}`; do
+for i in `seq 1 {}`; do
 
     echo "Loop step ${{i}} ($(date)) "
 
+""".format(
+        args.reactive_loops))
+        #############################################################
 
+
+
+
+        #############################################################
+        # MSD, if requested
+        #############################################################
+        if args.calculate_msd:
+            f.write(
+                """\
     # Calculate MSD
     echo "  calculating msd ($(date)) ..."
-    python ~/bin/hybrid_mdmc/calculate_MSD.py {} 'A' -filename_notebook '{}_notebook.xlsx' -frames '500 10 1000' -filename_output {}.msdoutput.${{i}}.txt
+    python ~/bin/hybrid_mdmc/calculate_MSD.py {} 'A' -filename_notebook '{}' -frames '500 10 1000' -filename_output {}.msdoutput.${{i}}.txt
     retVal=$?
     if [ $retVal -ne 0 ]; then
         exit $retVal
     fi
 
+    """.format(
+            args.prefix, args.filename_notebook, args.prefix))
+        #############################################################
+    
 
-            
-    # Run RMD script
+
+
+        #############################################################
+        # Continue main loop
+        #############################################################
+        f.write(
+            """\
+# Run RMD script
     echo "  running hybridmdmc ($(date)) ..."
     python {} {} {} -filename_notebook {} -diffusion_step ${{i}}
     retVal=$?
@@ -129,16 +191,9 @@ done
 
 echo "End time: $(date)"
 """.format(
-    args.prefix+'_hmdmc', args.prefix+'_hmdmc', args.prefix+'_hmdmc', args.queue, args.nodes, args.cores, args.timelim,
-    args.system, args.prefix, args.filename_notebook,
-    args.cores, args.prefix, args.prefix,
-    args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
-    args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
-    args.reactive_loops,
-    args.prefix, args.system, args.prefix,
-    mainscript, args.system, args.prefix, args.filename_notebook,
-    args.cores, args.prefix, args.prefix,
-))
+        mainscript, args.system, args.prefix, args.filename_notebook,
+        args.cores, args.prefix, args.prefix))
+        #############################################################
 
     return
 

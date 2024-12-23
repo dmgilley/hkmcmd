@@ -11,15 +11,16 @@ from hybrid_mdmc.parsers import *
 
 class HMDMC_ArgumentParser(ArgumentParser):
 
-    def __init__(self):
+    def __init__(self, auto=True):
         ArgumentParser.__init__(self)
-        self.add_default_args()
-        self.args = self.parse_args()
-        if self.args.filename_notebook == 'default':
-            self.args.filename_notebook = self.args.system + '_notebook.xlsx'
-        if os.path.isfile(self.args.filename_notebook):
-            self.read_notebook()
-        self.adjust_default_args()
+        if auto is True:
+            self.add_default_args()
+            self.args = self.parse_args()
+            if self.args.filename_notebook == 'default':
+                self.args.filename_notebook = self.args.system + '_notebook.xlsx'
+            if os.path.isfile(self.args.filename_notebook):
+                self.read_notebook()
+            self.adjust_default_args()
         return
 
     def add_default_args(self):
