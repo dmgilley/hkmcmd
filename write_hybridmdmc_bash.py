@@ -32,7 +32,7 @@ def main(argv):
                         help='Number of cores on which to run (int). Defualt: 16')
     parser.add_argument('-timelim', dest='timelim', type=str, default='06:00:00',
                         help='Time limit of run (str). Default: 03:00:00')
-    parser.add_argument('-reactive_loops', dest='reactive_loops', type=int, default=2000,
+    parser.add_argument('-reactive_loops', dest='reactive_loops', type=int, default=200,
                         help='Number of reactive loops.')
     parser.add_argument('--track_diffusion', dest='track_diffusion', action='store_true',
                         help='Track diffusion.')
@@ -88,6 +88,9 @@ echo "Start time: $(date)"
 
 # System prep
 python ~/bin/hybrid_mdmc/gen_initial_hybridmdmc.py {} {} -filename_notebook {}
+echo ""
+echo "running initial MD ($(date)) ..."
+echo ""
 mpirun -n {} lmp -in {}.in.init > {}.lammps.out
 cp {}.in.init               {}_prep.in.init
 cp {}.in.data               {}_prep.in.data
@@ -117,6 +120,9 @@ cp {}.diffusion.lammpstrj   {}_prep.diffusion.lammpstrj
             f.write(
                 """\
 # Calculate the first diffusion
+echo ""
+echo "calculating diffusion rates ($(date)) ..."
+echo ""
 python ~/bin/hybrid_mdmc/calculate_diffusion.py {} {} -filename_notebook {} -diffusion_species 'A'
 
 """.format(
@@ -132,7 +138,7 @@ python ~/bin/hybrid_mdmc/calculate_diffusion.py {} {} -filename_notebook {} -dif
         f.write(
             """\
 # Reactive loop
-for i in `seq 1 {}`; do
+for i in `seq 0 {}`; do
 
     echo "Loop step ${{i}} ($(date)) "
 
@@ -152,9 +158,9 @@ for i in `seq 1 {}`; do
     # Calculate MSD
     echo "  calculating msd ($(date)) ..."
     python ~/bin/hybrid_mdmc/calculate_MSD.py {} 'A' -filename_notebook '{}' -frames '500 10 1000' -filename_output {}.msdoutput.${{i}}.txt
-    retVal=$?
-    if [ $retVal -ne 0 ]; then
-        exit $retVal
+    return_value=$?
+    if [ $return_value -ne 0 ]; then
+        exit $return_value
     fi
 
     """.format(
@@ -172,17 +178,17 @@ for i in `seq 1 {}`; do
 # Run RMD script
     echo "  running hybridmdmc ($(date)) ..."
     python {} {} {} -filename_notebook {} -diffusion_step ${{i}}
-    retVal=$?
-    if [ $retVal -ne 0 ]; then
-        exit $retVal
+    return_value=$?
+    if [ $return_value -ne 0 ]; then
+        exit $return_value
     fi
 
     # Run MD
     echo "  running MD ($(date)) ..."
     mpirun -n {} lmp -in {}.in.init > {}.lammps.out
-    retVal=$?
-    if [ $retVal -ne 0 ]; then
-        exit $retVal
+    return_value=$?
+    if [ $return_value -ne 0 ]; then
+        exit $return_value
     fi
 
     echo ""

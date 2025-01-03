@@ -167,7 +167,12 @@ def get_rxns_serial(molecules,voxels,diffusion_rate,rxnscaling,rxn_data,minimum_
             diffusion_rates = np.maximum(diffusion_rates_reverse,diffusion_rates_forward)
             upper_triangle_indices = np.triu_indices_from(diffusion_rates, k=1)
             filtered_indices = [(i, j) for i, j in zip(*upper_triangle_indices) if diffusion_rates[i, j] > minimum_diffusion_rate]
-            times_of_diffusion = 1 / diffusion_rates
+
+            mask = np.nonzero(diffusion_rates <= minimum_diffusion_rate)
+            times_of_diffusion = 1/np.where(diffusion_rates > minimum_diffusion_rate, diffusion_rates, 1)
+            times_of_diffusion[mask] = np.inf
+
+#            times_of_diffusion = 1 / diffusion_rates
             times_of_rxn = 1 / (rxn_data[rxn_type]['rawrate']*rxnscaling.loc[cycle,rxn_type])
             reactions.update({ reaction_index+1+number_of_reactions:
                     [

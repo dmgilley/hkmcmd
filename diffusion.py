@@ -51,7 +51,7 @@ class Diffusion():
         if not hasattr(self, 'voxels_by_frame_array'):
             self.parse_trajectory_file()
         direct_voxel_transition_rates = calculate_direct_voxel_transition_rates(
-            np.product(self.number_of_voxels),
+            np.prod(self.number_of_voxels),
             self.voxels_by_frame_array,
             self.total_time,
             self.molecules_datafile
@@ -63,15 +63,15 @@ class Diffusion():
         if not hasattr(self, 'direct_voxel_transition_rates'):
             self.calculate_direct_voxel_transition_rates()
         if starting_position_idxs == 'all':
-            starting_position_idxs = np.arange(np.product(self.number_of_voxels)).flatten()
+            starting_position_idxs = np.arange(np.prod(self.number_of_voxels)).flatten()
         if number_of_steps is None:
-            number_of_steps = 4*np.product(self.number_of_voxels)
+            number_of_steps = 4*np.prod(self.number_of_voxels)
         if species == 'all':
             species = self.molecules_datafile.mol_types
         elif not isinstance(species, list):
             species = [species]
         self.voxels.find_voxel_neighbors()
-        noneighbor_mask = np.array([[j_idx in self.voxels.voxel_neighbors_dict[i_idx] for j_idx in range(np.product(self.number_of_voxels))] for i_idx in range(np.product(self.number_of_voxels))])
+        noneighbor_mask = np.array([[j_idx in self.voxels.voxel_neighbors_dict[i_idx] for j_idx in range(np.prod(self.number_of_voxels))] for i_idx in range(np.prod(self.number_of_voxels))])
         walkers_positions, walkers_times = {}, {}
         for sp in species:
             transfer_rates = np.where(noneighbor_mask, self.direct_voxel_transition_rates[sp], 0)
@@ -97,7 +97,7 @@ class Diffusion():
             average_first_time_between_positions[sp] = calculate_average_first_time_between_positions(
                 self.walkers_position[sp],
                 self.walkers_time[sp],
-                np.product(self.number_of_voxels)
+                np.prod(self.number_of_voxels)
             )
         setattr(self, 'average_first_time_between_positions', average_first_time_between_positions)
         return

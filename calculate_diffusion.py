@@ -27,7 +27,7 @@ def main(argv):
         parser.read_notebook()
     parser.adjust_default_args()
     args = parser.args
-    args.diffusion_species = args.diffusion_species.split(',').split('')
+    args.diffusion_species = args.diffusion_species.split()
 
     # Read in the data_file, diffusion_file, rxndf, and msf files.
     datafile_result = parse_data_file(args.filename_data, unwrap=True, atom_style=args.atom_style)
@@ -58,7 +58,7 @@ def main(argv):
         for species in masterspecies.keys()
     }
     for species in args.diffusion_species:
-        diffusion.perform_random_walks(number_of_steps=1500,species=species)
+        diffusion.perform_random_walks(number_of_steps=150,species=species)
         diffusion.calculate_average_first_time_between_positions(species=species)
         diffusion.calculate_diffusion_rates(species=species)
         diffusion_rate[species] = diffusion.diffusion_rates[species]
