@@ -33,18 +33,21 @@ class Diffusion():
 
         return
     
-    def parse_trajectory_file(self, start=0, end=-1, every=1, time_conversion=None):
+    def parse_trajectory_file(self, start=0, end=-1, every=1, time_conversion=None, return_timesteps=False):
         if time_conversion is not None:
             self.time_conversion = time_conversion
-        voxels_by_frame_array, total_time = assemble_voxels_by_frame_array(
+        result = assemble_voxels_by_frame_array(
             self.filename_trajectory,
             self.atoms_datafile,
             self.molecules_datafile,
             self.number_of_voxels,
-            start=start, end=end, every=every
+            start=start, end=end, every=every,
+            return_timesteps=return_timesteps
         )
-        setattr(self, 'voxels_by_frame_array', voxels_by_frame_array)
-        setattr(self, 'total_time', total_time*self.time_conversion)
+        setattr(self, 'voxels_by_frame_array', result[0])
+        setattr(self, 'total_time', result[1]*self.time_conversion)
+        if return_timesteps is True:
+            setattr(self, 'timesteps', result[2])
         return
     
     def calculate_direct_voxel_transition_rates(self):
@@ -59,10 +62,10 @@ class Diffusion():
         setattr(self, 'direct_voxel_transition_rates', direct_voxel_transition_rates)
         return
 
-    def perform_random_walks(self, starting_position_idxs='all', number_of_steps=None, species='all'):
+    def perform_random_walks(self, starting_position_idxs=None, number_of_steps=None, species='all'):
         if not hasattr(self, 'direct_voxel_transition_rates'):
             self.calculate_direct_voxel_transition_rates()
-        if starting_position_idxs == 'all':
+        if starting_position_idxs is None:
             starting_position_idxs = np.arange(np.prod(self.number_of_voxels)).flatten()
         if number_of_steps is None:
             number_of_steps = 4*np.prod(self.number_of_voxels)
@@ -152,7 +155,8 @@ def assemble_voxels_by_frame_array(
         atoms_datafile,
         molecules_datafile,
         number_of_voxels,
-        start=0, end=-1, every=1
+        start=0, end=-1, every=1,
+        return_timesteps=False
         ):
     voxels_by_frame_dict = {}
     all_timesteps = []
@@ -177,6 +181,8 @@ def assemble_voxels_by_frame_array(
         molecules_thisframe_voxel_IDs = assign_voxel_IDs_to_COGs(molecules_thisframe_COGs, voxels_thisframe)
         voxels_by_frame_dict[int(timestep)] = molecules_thisframe_voxel_IDs
     voxels_by_frame_array = np.array([value for key,value in sorted(voxels_by_frame_dict.items())])
+    if return_timesteps is True:
+        return voxels_by_frame_array, all_timesteps[-1]-all_timesteps[0], all_timesteps
     return voxels_by_frame_array, all_timesteps[-1]-all_timesteps[0]
 
 
