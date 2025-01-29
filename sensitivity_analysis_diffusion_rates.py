@@ -22,8 +22,6 @@ def main(argv):
     parser.add_default_args()
     parser.add_argument('-diffusion_species', dest='diffusion_species', type=str, default='all',
                         help='Species for which to calculate diffusion rates. Default is "all".')
-    parser.add_argument('-calculate_voxel_transition_rates', dest='calculate_voxel_transition_rates', default=True, type=bool,
-                        help='Calculate voxel transition rates.')
     parser.add_argument('-trajectory_frames', dest='trajectory_frames', default='0 -1 1', type=str)
     parser.add_argument('-voxel_transition_frames', dest='voxel_transition_frames', default=None, type=str,
                         help='Frames at which to calculate voxel transition rates. Default is to use only the last frame.')
@@ -33,7 +31,10 @@ def main(argv):
                         help='Maximum number of walk steps to perform. Default is 10 100 10.')
     parser.add_argument('-number_of_walk_replicates', dest='number_of_walk_replicates', default=10, type=int,
                         help='Number of walk replicates to perform. Default is 10.')
+    parser.add_argument('--no-calculate_voxel_transition_rates', dest='calculate_voxel_transition_rates', action="store_false",
+                        help='Calculate voxel transition rates.')
 
+    
     setattr(parser, 'args', parser.parse_args())
     if parser.args.filename_notebook == 'default':
         parser.args.filename_notebook = parser.args.system + '_notebook.xlsx'
@@ -43,7 +44,6 @@ def main(argv):
     args = parser.args
     args.diffusion_species = args.diffusion_species.split()
     trajectory_frames = [int(_) for _ in args.trajectory_frames.split()]
-    print(trajectory_frames)
     voxel_transition_frames = []
     if args.voxel_transition_frames is not None:
         voxel_transition_frames = args.voxel_transition_frames.split()
@@ -106,9 +106,10 @@ def main(argv):
         if not hasattr(diffusion, 'direct_voxel_transition_rates'):
             logfile.write(f'  {datetime.datetime.now()} -- attempting to read in direct voxel transition rates...\n')
             try:
-                direct_voxel_transition_rates = {
+                dvtr = {
                     species: read_direct_voxel_transition_rates(args.prefix+f'.voxel_transition_rates.{species}.final.txt')
                     for species in diffusion_species}
+                setattr(diffusion, "direct_voxel_transition_rates", {species: v[list(v.keys())[0]] for species,v in dvtr.items()})
             except:
                 logfile.write(f'  {datetime.datetime.now()} -- failed to read in direct voxel transition rates. Exiting.\n')
                 return
