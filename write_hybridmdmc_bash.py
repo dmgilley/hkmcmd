@@ -4,56 +4,95 @@
 #   dgilley@purdue.edu
 
 
-import argparse,sys
+import argparse, sys
 
 
 # Main function
 def main(argv):
-    """Write the bash file for initializing and running a new hybridmdmc Toy Problem.
-    """
+    """Write the bash file for initializing and running a new hybridmdmc Toy Problem."""
 
     # Create the parser
     parser = argparse.ArgumentParser()
 
     # Positional argument(s)
-    parser.add_argument(dest='system', type=str,
-                        help='System name (str).')
-    parser.add_argument(dest='prefix', type=str,
-                        help='Prefix (str).')
+    parser.add_argument(dest="system", type=str, help="System name (str).")
+    parser.add_argument(dest="prefix", type=str, help="Prefix (str).")
 
     # Optional arguments
-    parser.add_argument('-filename_notebook', dest='filename_notebook', type=str, default='default',
-                         help='Name of the parameters excel file (str). Default: default')
-    parser.add_argument('-queue', dest='queue', type=str, default='bsavoie',
-                        help='Queue on which to run (str). Defualt: bsavoie')
-    parser.add_argument('-nodes', dest='nodes', type=int, default=1,
-                       help='Number of nodes on which to run (int). Default: 1')
-    parser.add_argument('-cores', dest='cores', type=int, default=16,
-                        help='Number of cores on which to run (int). Defualt: 16')
-    parser.add_argument('-timelim', dest='timelim', type=str, default='06:00:00',
-                        help='Time limit of run (str). Default: 03:00:00')
-    parser.add_argument('-reactive_loops', dest='reactive_loops', type=int, default=200,
-                        help='Number of reactive loops.')
-    parser.add_argument('--track_diffusion', dest='track_diffusion', action='store_true',
-                        help='Track diffusion.')
-    parser.add_argument('--no-track_diffusion', dest='track_diffusion', action='store_false')
-    parser.add_argument('--calculate_msd', dest='calculate_msd', action='store_true',
-                        help='Calculate MSD.')
-    parser.add_argument('--no-calculate_msd', dest='calculate_msd', action='store_false')
+    parser.add_argument(
+        "-filename_notebook",
+        dest="filename_notebook",
+        type=str,
+        default="default",
+        help="Name of the parameters excel file (str). Default: default",
+    )
+    parser.add_argument(
+        "-queue",
+        dest="queue",
+        type=str,
+        default="bsavoie",
+        help="Queue on which to run (str). Defualt: bsavoie",
+    )
+    parser.add_argument(
+        "-nodes",
+        dest="nodes",
+        type=int,
+        default=1,
+        help="Number of nodes on which to run (int). Default: 1",
+    )
+    parser.add_argument(
+        "-cores",
+        dest="cores",
+        type=int,
+        default=16,
+        help="Number of cores on which to run (int). Defualt: 16",
+    )
+    parser.add_argument(
+        "-timelim",
+        dest="timelim",
+        type=str,
+        default="06:00:00",
+        help="Time limit of run (str). Default: 03:00:00",
+    )
+    parser.add_argument(
+        "-reactive_loops",
+        dest="reactive_loops",
+        type=int,
+        default=200,
+        help="Number of reactive loops.",
+    )
+    parser.add_argument(
+        "--track_diffusion",
+        dest="track_diffusion",
+        action="store_true",
+        help="Track diffusion.",
+    )
+    parser.add_argument(
+        "--no-track_diffusion", dest="track_diffusion", action="store_false"
+    )
+    parser.add_argument(
+        "--calculate_msd",
+        dest="calculate_msd",
+        action="store_true",
+        help="Calculate MSD.",
+    )
+    parser.add_argument(
+        "--no-calculate_msd", dest="calculate_msd", action="store_false"
+    )
     parser.set_defaults(track_diffusion=False)
     parser.set_defaults(calculate_msd=True)
-    
+
     # Parse the line arguments
     args = parser.parse_args()
-    if args.filename_notebook == 'default':
-        args.filename_notebook = args.system + '_notebook.xlsx'
-    
-    mainscript = '~/bin/hybrid_mdmc/hybridmdmc.py'
+    if args.filename_notebook == "default":
+        args.filename_notebook = args.system + "_notebook.xlsx"
+
+    mainscript = "~/bin/hybrid_mdmc/hybridmdmc.py"
 
     #############################################################
     # Header
     #############################################################
-    with open(args.prefix+'_hmdmc.sh', 'w') as f:
+    with open(args.prefix + "_hmdmc.sh", "w") as f:
         f.write(
             """\
 #!/bin/bash
@@ -102,17 +141,39 @@ cp {}.shrink.lammpstrj      {}_prep.shrink.lammpstrj
 cp {}.diffusion.lammpstrj   {}_prep.diffusion.lammpstrj
 
 """.format(
-        args.prefix+'_hmdmc', args.prefix+'_hmdmc', args.prefix+'_hmdmc', args.queue, args.nodes, args.cores, args.timelim,
-        args.system, args.prefix, args.filename_notebook,
-        args.cores, args.prefix, args.prefix,
-        args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
-        args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix, args.prefix,
-        ))
+                args.prefix + "_hmdmc",
+                args.prefix + "_hmdmc",
+                args.prefix + "_hmdmc",
+                args.queue,
+                args.nodes,
+                args.cores,
+                args.timelim,
+                args.system,
+                args.prefix,
+                args.filename_notebook,
+                args.cores,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+                args.prefix,
+            )
+        )
         #############################################################
 
-
-
-        
         #############################################################
         # Diffusion if requested
         #############################################################
@@ -126,11 +187,10 @@ echo ""
 python ~/bin/hybrid_mdmc/calculate_diffusion.py {} {} -filename_notebook {} -diffusion_species 'A'
 
 """.format(
-            args.system, args.prefix, args.filename_notebook))
+                    args.system, args.prefix, args.filename_notebook
+                )
+            )
         #############################################################
-
-
-
 
         #############################################################
         # Begin loop
@@ -143,11 +203,10 @@ for i in `seq 0 {}`; do
     echo "Loop step ${{i}} ($(date)) "
 
 """.format(
-        args.reactive_loops))
+                args.reactive_loops
+            )
+        )
         #############################################################
-
-
-
 
         #############################################################
         # MSD, if requested
@@ -164,11 +223,10 @@ for i in `seq 0 {}`; do
     fi
 
     """.format(
-            args.prefix, args.filename_notebook, args.prefix))
+                    args.prefix, args.filename_notebook, args.prefix
+                )
+            )
         #############################################################
-    
-
-
 
         #############################################################
         # Continue main loop
@@ -197,12 +255,19 @@ done
 
 echo "End time: $(date)"
 """.format(
-        mainscript, args.system, args.prefix, args.filename_notebook,
-        args.cores, args.prefix, args.prefix))
+                mainscript,
+                args.system,
+                args.prefix,
+                args.filename_notebook,
+                args.cores,
+                args.prefix,
+                args.prefix,
+            )
+        )
         #############################################################
 
     return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

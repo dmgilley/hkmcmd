@@ -13,7 +13,7 @@ from hybrid_mdmc.customargparse import HMDMC_ArgumentParser
 from hybrid_mdmc.classes import *
 from hybrid_mdmc.parsers import *
 from hybrid_mdmc.kmc import *
-from hybrid_mdmc.functions import *
+from functions import *
 from hybrid_mdmc.calc_voxels import *
 from hybrid_mdmc.diffusion import *
 

@@ -7,23 +7,48 @@
 # Imports
 import numpy as np
 from typing import Union
+from hybrid_mdmc import utility
 
 
 class Voxels:
     """Class for voxel information.
 
+    NOTE voxels are zero indexed, and their IDs are simply their
+    indices for all array and list attributes.
+
     Attributes
     -----------
-    box: list of lists of floats
-        Box dimensions.
-    num_voxels: list of integers
-        Number of voxels in each dimension.
-    xbounds: list of floats
-        X bounds for voxels.
-    ybounds: list of floats
-        Y bounds for voxels.
-    zbounds: list of floats
-        Z bounds for voxels.
+    box: list
+        Box dimensions, [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ].
+    number of voxels: list
+        Number of voxels in each dimension (length of three).
+    xbounds: list
+        X bounds for voxels, flattened. Voxel with index i has x bounds
+            [xbounds[i], xbounds[i+1]].
+    ybounds: list
+        Y bounds for voxels, flattened. Voxel with index i has y bounds
+            [ybounds[i], ybounds[i+1]].
+    zbounds: list
+        Z bounds for voxels, flattened. Voxel with index i has z bounds
+            [zbounds[i], zbounds[i+1]].
+    boundaries_dict: dict
+        Keys: voxel idx
+        Values: [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ]
+    IDs: np.ndarray
+        Voxel IDs (equal to voxel indices).
+    boundaries: list
+        Voxel boundaries, [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ]
+    origins: list
+        Voxel origin coordinates, [x,y,z].
+    centers: np.ndarray
+        Voxel center coordinates, [x,y,z].
+    neighbors_dict: dict
+        Keys: voxel idx
+        Values: list of voxel indices that are neighbors to the key voxel.
+    separation_groupings_dict: dict
+        Keys: separation distance
+        Values: list of tuples of voxel indices that are separated by the key
+            separation distance.
 
     Methods
     -----------
@@ -31,76 +56,51 @@ class Voxels:
 
     def __init__(
         self,
-        box: Union[list, None] = None,
-        number_of_voxels: Union[list, None] = None,
-        xbounds: Union[list, None] = None,
-        ybounds: Union[list, None] = None,
-        zbounds: Union[list, None] = None,
+        box: Union[None, list, np.ndarray] = None,
+        number_of_voxels: Union[None, int, float, list, np.ndarray] = None,
+        xbounds: Union[None, list, np.ndarray] = None,
+        ybounds: Union[None, list, np.ndarray] = None,
+        zbounds: Union[None, list, np.ndarray] = None,
     ):
 
-        box, number_of_voxels, xbounds, ybounds, zbounds = parse_voxel_inputs(
-            box, number_of_voxels, xbounds, ybounds, zbounds
+        self.box, self.number_of_voxels, self.xbounds, self.ybounds, self.zbounds = (
+            canonicalize_voxel_inputs(box, number_of_voxels, xbounds, ybounds, zbounds)
         )
-        self.box = box
-        self.number_of_voxels = number_of_voxels
-        self.xbounds = xbounds
-        self.ybounds = ybounds
-        self.zbounds = zbounds
-        self.create_voxel_boundaries_dictionary()
-        self.voxel_IDs = np.array(sorted(list(self.voxel_boundaries_dict.keys())))
-        self.voxel_boundaries = [self.voxel_boundaries_dict[_] for _ in self.voxel_IDs]
-        self.voxel_centers = np.array(
+        self.boundaries_dict = self.create_voxel_boundaries_dictionary()
+        self.IDs = np.arange(len(self.boundaries_dict)).flatten()
+        self.boundaries = [self.boundaries_dict[_] for _ in self.IDs]
+        self.origins = [tuple(np.array(_)[:, 0]) for _ in self.boundaries]
+        self.centers = np.array(
             [
                 [
                     np.mean(boundary_list[0]),
                     np.mean(boundary_list[1]),
                     np.mean(boundary_list[2]),
                 ]
-                for boundary_list in self.voxel_boundaries
+                for boundary_list in self.boundaries
             ]
         )
-        self.voxel_origins = [tuple(np.array(_)[:, 0]) for _ in self.voxel_boundaries]
+        self.neighbors_dict = self.find_voxel_neighbors()
+        self.separation_groupings_dict = self.get_separation_distance_groupings_dict()
 
         return
 
-    def create_voxel_boundaries_dictionary(self, rewrite=False):
-        if not hasattr(self, "voxel_boundaries_dict") or rewrite is True:
-            setattr(
-                self,
-                "voxel_boundaries_dict",
-                create_voxel_boundaries_dictionary(
-                    box=self.box,
-                    number_of_voxels=self.number_of_voxels,
-                    xbounds=self.xbounds,
-                    ybounds=self.ybounds,
-                    zbounds=self.zbounds,
-                ),
-            )
-        return self.voxel_boundaries_dict
+    def create_voxel_boundaries_dictionary(self):
+        return create_voxel_boundaries_dictionary(
+            number_of_voxels=self.number_of_voxels,
+            xbounds=self.xbounds,
+            ybounds=self.ybounds,
+            zbounds=self.zbounds,
+        )
 
-    def find_voxel_neighbors(
-        self, include_touching: bool = True, rewrite: bool = False
-    ):
-        if not hasattr(self, "voxel_neigbors_dict") or rewrite is True:
-            if not hasattr(self, "voxel_boundaries_dict"):
-                self.create_voxel_boundaries_dictionary()
-            if not hasattr(self, "voxel_boundaries"):
-                self.voxel_boundaries = [
-                    self.voxel_boundaries_dict[_] for _ in self.voxel_IDs
-                ]
-            setattr(
-                self,
-                "voxel_neighbors_dict",
-                find_voxel_neighbors_with_shaft_overlap_method(
-                    voxel_bounds=np.array(self.voxel_boundaries),
-                    voxel_IDs=self.voxel_IDs,
-                    include_touching=include_touching,
-                ),
-            )
-        return
+    def find_voxel_neighbors(self):
+        voxel_bounds = np.array(
+            [[[b[d][0], b[d][1]] for d in range(3)] for b in self.boundaries]
+        )
+        return find_voxel_neighbors_with_shaft_overlap_method(voxel_bounds)
 
     def assign_voxel_ID_to_given_COG(self, COG, voxel_idx_to_ID=None):
-        return assign_voxel_ID_to_given_COG(
+        return assign_voxel_idx_to_given_COG(
             COG,
             self.xbounds,
             self.ybounds,
@@ -109,74 +109,118 @@ class Voxels:
             voxel_idx_to_ID=voxel_idx_to_ID,
         )
 
+    def get_separation_distance_groupings_dict(self):
+        distances, groupings = get_voxel_distance_groupings(self)
+        return {
+            d: list(zip(groupings[didx][0], groupings[didx][1]))
+            for didx, d in enumerate(distances)
+        }
 
-def parse_voxel_inputs(
-    box: Union[list, None] = None,
-    number_of_voxels: Union[list, None] = None,
-    xbounds: Union[list, None] = None,
-    ybounds: Union[list, None] = None,
-    zbounds: Union[list, None] = None,
-):
 
-    # Adjust box argument
+def canonicalize_voxel_inputs(
+    box: Union[None, list, np.ndarray] = None,
+    number_of_voxels: Union[None, int, float, list, np.ndarray] = None,
+    xbounds: Union[None, list, np.ndarray] = None,
+    ybounds: Union[None, list, np.ndarray] = None,
+    zbounds: Union[None, list, np.ndarray] = None,
+) -> tuple:
+    """Canonicalizes inputs for voxelization.
+
+    Parameters
+    ----------
+    box: None | list | np.ndarray
+        Box dimensions.
+    number_of_voxels: None | int | float | list | np.ndarray
+        Number of voxels in each dimension.
+    xbounds: None | list | np.ndarray
+        X bounds for voxels.
+    ybounds: None | list | np.ndarray
+        Y bounds for voxels.
+    zbounds: None | list | np.ndarray
+        Z bounds for voxels.
+
+    Returns
+    -------
+    box: list
+        Box dimensions, [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ].
+    number of voxels: list
+        Number of voxels in each dimension (length of three).
+    xbounds: list
+        X bounds for voxels, flattened. Voxel with index i has x bounds
+            [xbounds[i], xbounds[i+1]].
+    ybounds: list
+        Y bounds for voxels, flattened. Voxel with index i has y bounds
+            [ybounds[i], ybounds[i+1]].
+    zbounds: list
+        Z bounds for voxels, flattened. Voxel with index i has z bounds
+            [zbounds[i], zbounds[i+1]].
+    """
+
+    # Canonicalize box
     if box is None:
         if None in [xbounds, ybounds, zbounds]:
             raise ValueError(
-                """
+                f"""
                 Either box dimenions or ALL voxel bounds must be specified.
-                Given box: {}
-                Given xbounds: {}
-                Given ybounds: {}
-                Given zbounds: {}
-                """.format(
-                    box, xbounds, ybounds, zbounds
-                )
+                    Given box: {box}
+                    Given xbounds: {xbounds}
+                    Given ybounds: {ybounds}
+                    Given zbounds: {zbounds}
+                """
             )
         box = [None] * 6
+    if type(box) is np.ndarray:
+        box = box.flatten().tolist()
     if len(box) == 3:
-        box = np.array(box).flatten()
+        box = utility.flatten_nested_list(box)
     if len(box) not in [0, 6]:
         raise ValueError(
+            f"""
+            Box dimensions are either in an incorrect format, or specified dimensionality is not currently supported.             
+                Given box: {box}
+                Expected [x_min,x_max,y_min,y_max,z_min,z_max] or [[x_min,x_max], [y_min,y_max], [z_min,z_max]]
             """
-            Box dimensions are either in an incorrect format, or specified dimensions are not currently supported.             
-            Given box: {}
-            Expected [x_min,x_max,y_min,y_max,z_min,z_max] or [[x_min,x_max], [y_min,y_max], [z_min,z_max]]
-            """.format(
-                box
-            )
         )
-    # convert box values to floats
-    box = np.array([float(b) if b is not None else None for b in box]).flatten()
+    box = (
+        np.array([float(_) if _ is not None else None for _ in box]).flatten().tolist()
+    )
 
-    # Adjust number_of_voxels argument
-    if type(number_of_voxels) is np.ndarray:
-        number_of_voxels = number_of_voxels.flatten().tolist()
+    # Canonicalize number_of_voxels
     if number_of_voxels is None:
         if None in [xbounds, ybounds, zbounds]:
             raise ValueError(
-                """
+                f"""
                 Either number_of_voxels or ALL voxel bounds must be specified.
-                Given number_of_voxels: {}
-                Given xbounds: {}
-                Given ybounds: {}
-                Given zbounds: {}
-                """.format(
-                    number_of_voxels, xbounds, ybounds, zbounds
-                )
+                    Given number_of_voxels: {number_of_voxels}
+                    Given xbounds: {xbounds}
+                    Given ybounds: {ybounds}
+                    Given zbounds: {zbounds}
+                """
             )
         number_of_voxels = [len(xbounds) - 1, len(ybounds) - 1, len(zbounds) - 1]
+    if type(number_of_voxels) is np.ndarray:
+        number_of_voxels = number_of_voxels.flatten().tolist()
+    if type(number_of_voxels) in [int, float]:
+        number_of_voxels = [int(number_of_voxels)]
     if len(number_of_voxels) == 1:
         number_of_voxels = [number_of_voxels[0]] * 3
 
-    # Adjust xbounds, ybounds, and zbounds arguments
+    # Canonicalize xbounds, ybounds, and zbounds
     if xbounds is None:
         xbounds = np.linspace(box[0], box[1], number_of_voxels[0] + 1).tolist()
     if ybounds is None:
         ybounds = np.linspace(box[2], box[3], number_of_voxels[1] + 1).tolist()
     if zbounds is None:
         zbounds = np.linspace(box[4], box[5], number_of_voxels[2] + 1).tolist()
+    if type(xbounds) is np.ndarray:
+        xbounds = xbounds.flatten().tolist()
+    if type(ybounds) is np.ndarray:
+        ybounds = ybounds.flatten().tolist()
+    if type(zbounds) is np.ndarray:
+        zbounds = zbounds.flatten().tolist()
 
     # If a box dimension wasn't set, pull it from the voxel bounds
+    box = np.array(box).flatten()
     box = np.where(
         box == None,
         [xbounds[0], xbounds[-1], ybounds[0], ybounds[-1], zbounds[0], zbounds[-1]],
@@ -185,9 +229,7 @@ def parse_voxel_inputs(
     box = [[box[0], box[1]], [box[2], box[3]], [box[4], box[5]]]
 
     # Consistency check - box and x/y/z bounds
-    error_box = []
-    error_bounds = []
-    error_dimension = []
+    error_box, error_bounds, error_dimension = [], [], []
     for d, dbounds in enumerate([xbounds, ybounds, zbounds]):
         if box[d] != [dbounds[0], dbounds[-1]]:
             error_box.append(box[d])
@@ -195,19 +237,15 @@ def parse_voxel_inputs(
             error_dimension.append(["x", "y", "z"][d])
     if len(error_box):
         raise ValueError(
-            """
+            f"""
             Inconsistent boundaries.
-            Given box bounds for {} dimension: {}
-            Specified voxel bounds for {} dimension: {}
-            """.format(
-                error_dimension, error_box, error_dimension, error_bounds
-            )
+                Given box bounds for {error_dimension} dimension: {error_box}
+                Specified voxel bounds for {error_dimension} dimension: {error_bounds}
+            """
         )
 
     # Consistency check - number of voxels and bounds
-    error_voxels = []
-    error_bounds = []
-    error_dimension = []
+    error_voxels, error_bounds, error_dimension = [], [], []
     for d, dbounds in enumerate([xbounds, ybounds, zbounds]):
         if number_of_voxels[d] != len(dbounds) - 1:
             error_voxels.append(number_of_voxels[d])
@@ -215,28 +253,45 @@ def parse_voxel_inputs(
             error_dimension.append(["x", "y", "z"][d])
     if len(error_voxels):
         raise ValueError(
-            """
+            f"""
             Inconsistent number of voxels.
-            Given number of voxels for {} dimension: {}
-            Specified voxel bounds for {} dimension: {}
-            """.format(
-                error_dimension, error_voxels, error_dimension, error_bounds
-            )
+                Given number of voxels for {error_dimension} dimension: {error_voxels}
+                Specified voxel bounds for {error_dimension} dimension: {error_bounds}
+            """
         )
 
     return box, number_of_voxels, xbounds, ybounds, zbounds
 
 
 def create_voxel_boundaries_dictionary(
-    box: Union[list, None] = None,
-    number_of_voxels: Union[list, None] = None,
-    xbounds: Union[list, None] = None,
-    ybounds: Union[list, None] = None,
-    zbounds: Union[list, None] = None,
-):
-    box, number_of_voxels, xbounds, ybounds, zbounds = parse_voxel_inputs(
-        box, number_of_voxels, xbounds, ybounds, zbounds
-    )
+    number_of_voxels: list,
+    xbounds: list,
+    ybounds: list,
+    zbounds: list,
+) -> tuple:
+    """Creates a dictionary of voxel boundaries.
+
+    Parameters
+    ----------
+    number of voxels: list
+        Number of voxels in each dimension (length of three).
+    xbounds: list
+        X bounds for voxels, flattened. Voxel with index i has x bounds
+            [xbounds[i], xbounds[i+1]].
+    ybounds: list
+        Y bounds for voxels, flattened. Voxel with index i has y bounds
+            [ybounds[i], ybounds[i+1]].
+    zbounds: list
+        Z bounds for voxels, flattened. Voxel with index i has z bounds
+            [zbounds[i], zbounds[i+1]].
+
+    Returns
+    -------
+    voxel_boundaries_dict: dict
+        Keys: voxel idx
+        Values: [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ]
+    """
+
     voxel_boundaries_dict, count = {}, 0
     for i in range(len(xbounds) - 1):
         for j in range(len(ybounds) - 1):
@@ -254,90 +309,94 @@ def create_voxel_boundaries_dictionary(
     return voxel_boundaries_dict
 
 
-def get_box_from_voxel_boundaries_dict(voxel_boundaries_dict):
-    return [
-        [
-            np.min(
-                [
-                    voxel_boundaries_dict[_][didx][0]
-                    for _ in voxel_boundaries_dict.keys()
-                ]
-            ),
-            np.max(
-                [
-                    voxel_boundaries_dict[_][didx][1]
-                    for _ in voxel_boundaries_dict.keys()
-                ]
-            ),
-        ]
-        for didx in range(3)
-    ]
-
-
 def calculate_shaft_overlap_idxs_1D(
-    bounds_of_primary_voxel: np.ndarray,
-    bounds_of_comparison_voxels: np.ndarray,
-    inclusive: bool = True,
-) -> tuple:
+    bounds_of_primary_voxel: np.ndarray, bounds_of_comparison_voxels: np.ndarray
+) -> np.ndarray:
+    """Finds indices of comparison voxels that overlap with the primary voxel.
+
+    This function assumes that voxel bounds define an infinitely long
+    shaft. It compares the shaft boundaries of the primary voxel to all
+    comparison voxels, returning the indices of the comparison voxels
+    whose shafts overlap with the shaaft of the primary voxel.
+
+    non overlapping    overlapping    overlapping
+     |  |                |  |            |  |
+     |  |                |  |            |  |
+    ---------------    -----------    -----------
+          |  |              |  |           |  |
+          |  |              |  |           |  |
+
+    Parameters
+    ----------
+    bounds_of_primary_voxel: np.ndarray
+        1D array of length 2, [min, max].
+    bounds_of_comparison_voxels: np.ndarray
+        2D array of shape (N, 2), where N is the number of comparison voxels.
+
+    Returns
+    -------
+    np.ndarray
+        1D array of indices of comparison voxels that overlap with the primary voxel.
+    """
 
     min_a = bounds_of_primary_voxel[0]
     max_a = bounds_of_primary_voxel[1]
     min_b = bounds_of_comparison_voxels[:, 0]
     max_b = bounds_of_comparison_voxels[:, 1]
-
-    if inclusive is True:
-        overlap_idxs = np.argwhere(
-            np.logical_and(np.logical_not(min_a > max_b), np.logical_not(max_a < min_b))
-        ).flatten()
-    else:
-        overlap_idxs = np.argwhere(
-            np.logical_and(
-                np.logical_not(min_a >= max_b), np.logical_not(max_a <= min_b)
-            )
-        ).flatten()
-
-    return overlap_idxs
+    return np.argwhere(
+        np.logical_and(np.logical_not(min_a > max_b), np.logical_not(max_a < min_b))
+    ).flatten()
 
 
-def find_voxel_neighbors_with_shaft_overlap_method(
-    voxel_bounds: np.ndarray,  # "number of voxels" x "number of dimensions" x 2
-    voxel_IDs: Union[
-        np.ndarray, None
-    ] = None,  # flattened array pf size "number of voxels"
-    include_touching: bool = True,
-) -> tuple:
+def find_voxel_neighbors_with_shaft_overlap_method(voxel_bounds: np.ndarray) -> tuple:
+    """Finds neighbors of each voxel using the shaft overlap method.
 
-    if voxel_IDs is None:
-        voxel_IDs = np.arange(len(voxel_bounds)).flatten()
+    Parameters
+    ----------
+    voxel_bounds: np.ndarray
+        2D array of shape (N, 3, 2), where N is the number of voxels.
+        Entry [i, j, 0] is the j-th dimension minimum of the i-th voxel.
+        Entry [i, j, 1] is the j-th dimension maximum of the i-th voxel.
+
+    Returns
+    -------
+    voxel_neighbors: dict
+        Keys: voxel index
+        Values: list of voxel indices that are neighbors to the key voxel.
+    """
+
     box_minima = [
         np.min(voxel_bounds[:, dimension, 0], axis=None) for dimension in range(3)
     ]
-    voxels_on_minima = [
+    box_maxima = [
+        np.max(voxel_bounds[:, dimension, 1], axis=None) for dimension in range(3)
+    ]
+    voxel_idxs_on_minima = [
         [
-            voxel_IDs[voxel_idx]
+            voxel_idx
             for voxel_idx, voxel_bounds in enumerate(voxel_bounds)
             if voxel_bounds[dimension, 0] == box_minima[dimension]
         ]
         for dimension in range(3)
     ]
-    box_maxima = [
-        np.max(voxel_bounds[:, dimension, 1], axis=None) for dimension in range(3)
-    ]
-    voxels_on_maxima = [
+    voxel_idxs_on_maxima = [
         [
-            voxel_IDs[voxel_idx]
+            voxel_idx
             for voxel_idx, voxel_bounds in enumerate(voxel_bounds)
             if voxel_bounds[dimension, 1] == box_maxima[dimension]
         ]
         for dimension in range(3)
     ]
     voxel_neighbors = {}
-
     for primary_voxel_idx, primary_voxel_bounds in enumerate(voxel_bounds):
-        neighbor_IDs = np.delete(voxel_IDs, primary_voxel_idx)
+        neighbor_idxs = np.delete(np.arange(voxel_bounds.shape[0]), primary_voxel_idx)
         for dimension in range(3):
             bounds_of_comparison_voxels = voxel_bounds[
-                [vidx for vidx, vID in enumerate(voxel_IDs) if vID in neighbor_IDs]
+                [
+                    vidx
+                    for vidx in np.arange(voxel_bounds.shape[0])
+                    if vidx in neighbor_idxs
+                ]
             ][:, dimension]
             if primary_voxel_bounds[dimension, 0] == box_minima[dimension]:
                 bounds_of_comparison_voxels = np.concatenate(
@@ -346,20 +405,20 @@ def find_voxel_neighbors_with_shaft_overlap_method(
                         np.array(
                             [
                                 [-np.inf, box_minima[dimension]]
-                                for vID in voxels_on_maxima[dimension]
-                                if vID in neighbor_IDs
+                                for vidx in voxel_idxs_on_maxima[dimension]
+                                if vidx in neighbor_idxs
                             ]
                         ),
                     )
                 )
-                neighbor_IDs = np.concatenate(
+                neighbor_idxs = np.concatenate(
                     (
-                        neighbor_IDs,
+                        neighbor_idxs,
                         np.array(
                             [
-                                vID
-                                for vID in voxels_on_maxima[dimension]
-                                if vID in neighbor_IDs
+                                vidx
+                                for vidx in voxel_idxs_on_maxima[dimension]
+                                if vidx in neighbor_idxs
                             ]
                         ).flatten(),
                     )
@@ -371,20 +430,20 @@ def find_voxel_neighbors_with_shaft_overlap_method(
                         np.array(
                             [
                                 [box_maxima[dimension], np.inf]
-                                for vID in voxels_on_minima[dimension]
-                                if vID in neighbor_IDs
+                                for vidx in voxel_idxs_on_minima[dimension]
+                                if vidx in neighbor_idxs
                             ]
                         ),
                     )
                 )
-                neighbor_IDs = np.concatenate(
+                neighbor_idxs = np.concatenate(
                     (
-                        neighbor_IDs,
+                        neighbor_idxs,
                         np.array(
                             [
-                                vID
-                                for vID in voxels_on_minima[dimension]
-                                if vID in neighbor_IDs
+                                vidx
+                                for vidx in voxel_idxs_on_minima[dimension]
+                                if vidx in neighbor_idxs
                             ]
                         ).flatten(),
                     )
@@ -392,18 +451,49 @@ def find_voxel_neighbors_with_shaft_overlap_method(
             shaft_overlap_idxs = calculate_shaft_overlap_idxs_1D(
                 primary_voxel_bounds[dimension],
                 bounds_of_comparison_voxels,
-                inclusive=include_touching,
             )
-            neighbor_IDs = neighbor_IDs[shaft_overlap_idxs]
-            neighbor_IDs = np.sort(np.unique(neighbor_IDs))
-        voxel_neighbors[voxel_IDs[primary_voxel_idx]] = neighbor_IDs
-
+            neighbor_idxs = neighbor_idxs[shaft_overlap_idxs]
+            neighbor_idxs = np.sort(np.unique(neighbor_idxs))
+        voxel_neighbors[primary_voxel_idx] = neighbor_idxs
     return voxel_neighbors
 
 
-def assign_voxel_ID_to_given_COG(
-    COG, xbounds, ybounds, zbounds, box, voxel_idx_to_ID=None
-):
+def assign_voxel_idx_to_given_COG(
+    COG: Union[list, np.ndarray],
+    xbounds: list,
+    ybounds: list,
+    zbounds: list,
+    box: list,
+) -> int:
+    """Assigns voxel index to given Center of Geometry.
+
+    For a given COG, the corresponding voxel index in which the COG is
+    located is returned.
+
+    NOTE this function saves time by assuming that the voxel indices
+    are assigned for x, then y, then z.
+
+    Parameters
+    ----------
+    COG: list | np.ndarray
+        Center of geometry, [x,y,z].
+    xbounds: list
+        X bounds for voxels, flattened. Voxel with index i has x bounds
+            [xbounds[i], xbounds[i+1]].
+    ybounds: list
+        Y bounds for voxels, flattened. Voxel with index i has y bounds
+            [ybounds[i], ybounds[i+1]].
+    zbounds: list
+        Z bounds for voxels, flattened. Voxel with index i has z bounds
+            [zbounds[i], zbounds[i+1]].
+    box: list
+        Box dimensions, [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ].
+
+    Returns
+    -------
+    int
+        Voxel idx.
+    """
 
     # COG s/b flattened array
     if type(COG) is list:
@@ -427,10 +517,53 @@ def assign_voxel_ID_to_given_COG(
         + yidx * (len(zbounds) - 1)
         + zidx
     )
-
-    # if voxel_idx_to_ID is given, return the ID
-    if voxel_idx_to_ID is not None:
-        return voxel_idx_to_ID[vidx]
-
-    # otherwise, assume idx = ID
     return vidx
+
+
+def get_voxel_distance_groupings(voxels: Voxels) -> tuple:
+    """Returns voxel distance groupings.
+
+    Given a Voxels instance, this function will find the set of
+    separation distances between all voxels, and will assign each
+    voxel-voxel pair to the corresponding distance group.
+
+    Parameters
+    ----------
+    voxels: Voxels
+        Voxel object.
+
+    Returns
+    -------
+    neighbor_distances: list
+        List of distances between voxels.
+    neighbor_idxs: list
+        List of lists of voxel indices that are neighbors to the key voxel.
+    """
+    distance = utility.find_dist_same(voxels.centers, voxels.box)
+    neighbor_distances = sorted(list(set(distance.flatten())))[1:]
+    return neighbor_distances, [np.where(distance == d) for d in neighbor_distances]
+
+
+def test():
+
+    # inconsistent box, number_of_voxels, bounds
+    # voxel boundaries dictionary
+    # idx to ID
+    # check that all types are correct
+    # find voxel neighbors
+    # assign voxel ID to given COG
+    # get separation distance groupings
+
+    voxel = Voxels(
+        box=[[0, 1], [0, 1], [0, 1]],
+        number_of_voxels=[2, 2, 2],
+        xbounds=[0, 0.5, 1],
+        ybounds=[0, 0.5, 1],
+        zbounds=[0, 0.5, 1],
+    )
+
+    return None
+
+
+if __name__ == "__main__":
+    test()
