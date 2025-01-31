@@ -132,7 +132,7 @@ def gen_molecules(atoms, atomtypes2moltype, voxels=None):
         atom_ids=[molecules_dict[m]["atom_IDs"] for m in mkeys],
         cogs=[molecules_dict[m]["cog"] for m in mkeys],
         mol_types=[molecules_dict[m]["type"] for m in mkeys],
-        voxels=[molecules_dict[m]["voxel"] for m in mkeys],
+        voxel_idxs=[molecules_dict[m]["voxel"] for m in mkeys],
     )
 
 

@@ -106,7 +106,6 @@ class Voxels:
             self.ybounds,
             self.zbounds,
             self.box,
-            voxel_idx_to_ID=voxel_idx_to_ID,
         )
 
     def get_separation_distance_groupings_dict(self):

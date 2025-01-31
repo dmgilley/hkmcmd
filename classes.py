@@ -130,7 +130,7 @@ class MoleculeList:
         }
 
     def get_cog(self, atomslist, box=[]):
-        self.cog = np.array(
+        self.cogs = np.array(
             [
                 np.mean(
                     np.array(
@@ -148,17 +148,17 @@ class MoleculeList:
         # Wrap back into the box, if it's provided
         if len(box):
             for d in range(3):
-                while not np.all(self.cog[:, d] >= box[d][0]):
-                    self.cog[:, d] = np.where(
-                        self.cog[:, d] >= box[d][0],
-                        self.cog[:, d],
-                        self.cog[:, d] + (box[d][1] - box[d][0]),
+                while not np.all(self.cogs[:, d] >= box[d][0]):
+                    self.cogs[:, d] = np.where(
+                        self.cogs[:, d] >= box[d][0],
+                        self.cogs[:, d],
+                        self.cogs[:, d] + (box[d][1] - box[d][0]),
                     )
-                while not np.all(self.cog[:, d] <= box[d][1]):
-                    self.cog[:, d] = np.where(
-                        self.cog[:, d] <= box[d][1],
-                        self.cog[:, d],
-                        self.cog[:, d] - (box[d][1] - box[d][0]),
+                while not np.all(self.cogs[:, d] <= box[d][1]):
+                    self.cogs[:, d] = np.where(
+                        self.cogs[:, d] <= box[d][1],
+                        self.cogs[:, d],
+                        self.cogs[:, d] - (box[d][1] - box[d][0]),
                     )
 
     def assign_voxel_idxs(self, voxel_origins, voxel_boundaries):

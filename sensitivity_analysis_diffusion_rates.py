@@ -47,7 +47,7 @@ def main(argv):
     parser.add_argument(
         "-direct_transition_frames",
         dest="direct_transition_frames",
-        default="0 -1 1",
+        default="2 -1 1",
         type=str,
         help="Direct transition frames to use; 'start end every'. Default: '0 -1 1'",
     )
@@ -77,9 +77,10 @@ def main(argv):
     # Adjust arguments
     args.species = args.species.split()
     trajectory_frames = [int(_) for _ in args.trajectory_frames.split()]
+    direct_transition_frames = [int(_) for _ in args.direct_transition_frames.split()]
 
     # Prepare system
-    file_log = utility.FileTracker(args.prefix + ".sadr_log.txt")
+    file_log = utility.FileTracker(args.prefix + ".sa.log.txt")
     datafile_result = parse_data_file(
         args.filename_data, unwrap=True, atom_style=args.atom_style
     )
@@ -88,7 +89,7 @@ def main(argv):
     species = [
         k
         for k in masterspecies.keys()
-        if k in args.diffusion_species or args.diffusion_species == ["all"]
+        if k in args.species or args.species == ["all"]
     ]
     voxels_datafile = Voxels(box_datafile, args.number_of_voxels)
     atomtypes2moltype = {
@@ -98,7 +99,7 @@ def main(argv):
         atoms_datafile, atomtypes2moltype, voxels_datafile
     )
     filename_mvabfa = (
-        args.prefix + ".sa.mvabfr.txt"
+        args.prefix + ".sa.mvabfa.txt"
     )  # name of file containing the "molecular voxel assignments by frame array" ("mvabfa")
 
     # Voxel transition rate sensitivity
@@ -107,7 +108,7 @@ def main(argv):
             f"\ncalculating direct transition rate sensitivity to length of diffusion trajectory... {datetime.datetime.now()} \n\n"
         )
         # If a molecular voxel assignments by frame array file does not exist, the trajectory file must be parsed to create one.
-        if not os.isfile(filename_mvabfa):
+        if not os.path.isfile(filename_mvabfa):
             file_log.write(f"  {filename_mvabfa} not found.\n")
             file_log.write(
                 f"  parsing {args.filename_trajectory} (frame {trajectory_frames[0]} to {trajectory_frames[1]} by every {trajectory_frames[2]} frames)... {datetime.datetime.now()} \n\n"
@@ -130,17 +131,19 @@ def main(argv):
 
         # Create the output files
         output_files = [
-            utility.FileTracker(f"{args.prefix}.{sp}.sa_direct_rates.txt")
+            utility.FileTracker(f"{args.prefix}.sa.direct_rates.{sp}.txt")
             for sp in species
         ]
 
         # Loop over each total number of frames, create a Diffusion instance, manually set the
         # molecular voxel assignments by frame array, calcule the direct transition rates, and
         # write the result to the output file.
+        if direct_transition_frames[1] == -1:
+            direct_transition_frames[1] = mvabfa.shape[0]
         for total_frames in np.arange(
-            args.direct_transition_frames[0],
-            args.direct_transition_frames[1],
-            args.direct_transition_frames[2],
+            direct_transition_frames[0],
+            direct_transition_frames[1],
+            direct_transition_frames[2],
         ):
             if total_frames > mvabfa.shape[0]:
                 break
@@ -221,10 +224,10 @@ def calculate_and_write_mvabfa(
         voxels_datafile,
         time_conversion=time_conversion,
     )
-    diffusion.calculate_molecular_voxel_assignments_by_frame_array(
+    diffusion.calculate_molecular_voxel_assignments_by_frame(
         start=trajectory_frames[0],
-        end=trajectory_frames[2],
-        every=trajectory_frames[1],
+        end=trajectory_frames[1],
+        every=trajectory_frames[2],
     )
     output = np.concatenate(
         (

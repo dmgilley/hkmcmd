@@ -95,14 +95,14 @@ class FileTracker:
         self.name = name
         self.calling_script = None
         frame = inspect.currentframe().f_back
-        script_filename = frame.f_globals.get("__file__", None)
-        if script_filename is not None:
-            with open(script_filename, "r") as script_file:
-                self.calling_script = script_file.read()
+        #script_filename = frame.f_globals.get("__file__", None)
+        #if script_filename is not None:
+        #    with open(script_filename, "r") as script_file:
+        #        self.calling_script = script_file.read()
         with open(self.name, "w") as f:
             f.write(f"# File created {datetime.datetime.now()}\n")
-            if self.calling_script is not None:
-                f.write(f"# Created during execution of {self.calling_script}\n")
+        #    if self.calling_script is not None:
+        #        f.write(f"# Created during execution of {self.calling_script}\n")
         return
 
     def write(self, string):
