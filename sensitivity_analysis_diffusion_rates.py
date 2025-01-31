@@ -51,7 +51,27 @@ def main(argv):
         type=str,
         help="Direct transition frames to use; 'start end every'. Default: '0 -1 1'",
     )
-
+    parser.add_argument(
+        "-random_walk_lengths",
+        dest="random_walk_lengths",
+        default="100 200 100",
+        type=str,
+        help="Random walk lengths to use; 'start end every'. Default: '100 200 100'.",
+    )
+    parser.add_argument(
+        "-random_walk_replicates",
+        dest="random_walk_replicates",
+        default=10,
+        type=int,
+        help="Number of random walk replicates. Default: 10.",
+    )
+    parser.add_argument(
+        "-random_walk_recursion_interval",
+        dest="random_walk_recursion_interval",
+        default=1,
+        type=int,
+        help="Recursion interval for random walk. Default: 1.",
+    )
     parser.add_argument(
         "--calculate_direct_transition_sensitivity",
         dest="calculate_direct_transition_sensitivity",
@@ -78,6 +98,12 @@ def main(argv):
     args.species = args.species.split()
     trajectory_frames = [int(_) for _ in args.trajectory_frames.split()]
     direct_transition_frames = [int(_) for _ in args.direct_transition_frames.split()]
+    random_walk_lengths = [int(_) for _ in args.random_walk_lengths.split()]
+    random_walk_lengths = np.arange(
+        random_walk_lengths[0], random_walk_lengths[1], random_walk_lengths[2]
+    )
+    random_walk_replicates = np.arange(1, args.random_walk_replicates + 1)
+    random_walk_recursion_interval = int(args.random_walk_recursion_interval)
 
     # Prepare system
     file_log = utility.FileTracker(args.prefix + ".sa.log.txt")
@@ -87,9 +113,7 @@ def main(argv):
     atoms_datafile, box_datafile = datafile_result[0], datafile_result[5]
     masterspecies = parser.get_masterspecies_dict()
     species = [
-        k
-        for k in masterspecies.keys()
-        if k in args.species or args.species == ["all"]
+        k for k in masterspecies.keys() if k in args.species or args.species == ["all"]
     ]
     voxels_datafile = Voxels(box_datafile, args.number_of_voxels)
     atomtypes2moltype = {
@@ -105,7 +129,7 @@ def main(argv):
     # Voxel transition rate sensitivity
     if args.calculate_direct_transition_sensitivity is True:
         file_log.write(
-            f"\ncalculating direct transition rate sensitivity to length of diffusion trajectory... {datetime.datetime.now()} \n\n"
+            f"\ncalculating direct transition rate sensitivity analysis... {datetime.datetime.now()} \n\n"
         )
         # If a molecular voxel assignments by frame array file does not exist, the trajectory file must be parsed to create one.
         if not os.path.isfile(filename_mvabfa):
@@ -181,6 +205,78 @@ def main(argv):
                 output_files[spidx].write(
                     output_df.to_string(index=False, header=False)
                 )
+
+    # Random walk rate sensitivity
+    if args.calculate_random_walk_sensitivity is True:
+        file_log.write(
+            f"\ncalculating random walk rate sensitivity analysis... {datetime.datetime.now()} \n\n"
+        )
+
+        direct_voxel_transition_rates = {}
+        for sp in species:
+            (
+                number_of_frames,
+                trajectory_frames,
+                total_time,
+                direct_voxel_transition_rates[sp],
+            ) = read_direct_rates_files(f"{args.prefix}.sa.direct_rates.{sp}.txt")
+
+        # declare output files
+        output_files = [
+            utility.FileTracker(f"{args.prefix}.sa.random_walk_rates.{sp}.txt")
+            for sp in species
+        ]
+
+        # loop over walk lengths
+        for walk_length in random_walk_lengths:
+            file_log.write(
+                f"  calculating random walk rates using a walk length of {walk_length}... {datetime.datetime.now()} \n"
+            )
+
+            # loop over walk replicates
+            for rep in random_walk_replicates:
+                file_log.write(f"    replicate {rep}... {datetime.datetime.now()} \n")
+
+                # declare new diffusion instance
+                diffusion = Diffusion(
+                    args.prefix,
+                    args.filename_trajectory,
+                    atoms_datafile,
+                    molecules_datafile,
+                    voxels_datafile,
+                    time_conversion=args.lammps_time_units_to_seconds_conversion,
+                )
+
+                # manually assign direct transition rates
+                diffusion.direct_voxel_transition_rates = deepcopy(
+                    direct_voxel_transition_rates
+                )
+                diffusion.direct_voxel_transition_rates = {
+                    k: v[sorted(v.keys())[-1]]
+                    for k, v in diffusion.direct_voxel_transition_rates.items()
+                }
+
+                # calculate random walk rates
+                diffusion.calculate_diffusion_rates(
+                    starting_position_idxs=np.arange(
+                        diffusion.direct_voxel_transition_rates[species[0]].shape[0]
+                    ),
+                    number_of_steps=walk_length,
+                    species=species,
+                    recursion_interval=random_walk_recursion_interval,
+                )
+
+                # write to file
+                for spidx, sp in enumerate(species):
+                    bar = "".join((["#"] * 100))
+                    output_df = pd.DataFrame(diffusion.diffusion_rates[sp])
+                    output_files[spidx].write(f"\n\n{bar}\n")
+                    output_files[spidx].write(f"RandomWalkLength {walk_length}\n")
+                    output_files[spidx].write(f"RandomWalkReplicate {rep}\n")
+                    output_files[spidx].write(f"DiffusionRates\n")
+                    output_files[spidx].write(
+                        output_df.to_string(index=False, header=False)
+                    )
 
     return
 
@@ -258,7 +354,7 @@ def calculate_and_write_mvabfa(
 
 def read_mvabfa_file(
     filename_mvabfr: str,
-) -> tuple[list, list, np.ndarray, list]:
+) -> tuple:
     """Read molecular voxel assignments by frame array from file.
 
     Parameters
@@ -301,6 +397,47 @@ def read_mvabfa_file(
         molecule_types,
         np.array([v for k, v in sorted(mvabfa.items())]),
         timesteps,
+    )
+
+
+def read_direct_rates_files(filename):
+    direct_transition_rates = {}
+    number_of_frames, trajectory_frame, total_time = [], [], []
+    with open(filename, "r") as f:
+        for line in f:
+            fields = line.split()
+            if len(fields) == 0:
+                continue
+            if "#" in fields[0]:
+                continue
+            if fields[0] == "NumberOfFrames":
+                number_of_frames.append(int(fields[1]))
+                continue
+            if fields[0] == "TrajectoryFrame":
+                trajectory_frame.append(int(fields[1]))
+                continue
+            if fields[0] == "TotalTime":
+                total_time.append(float(fields[1]))
+                continue
+            if fields[0] == "DirectTransitionRates":
+                flag = True
+                voxel_idx = 0
+                direct_transition_rates[number_of_frames[-1]] = {}
+                continue
+            if flag:
+                direct_transition_rates[number_of_frames[-1]][voxel_idx] = [
+                    float(_) for _ in fields
+                ]
+                voxel_idx += 1
+                continue
+    return (
+        number_of_frames,
+        trajectory_frame,
+        total_time,
+        {
+            k: np.array([vv for kk, vv in sorted(v.items())])
+            for k, v in sorted(direct_transition_rates.items())
+        },
     )
 
 

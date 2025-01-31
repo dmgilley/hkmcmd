@@ -601,7 +601,6 @@ def calculate_molecule_COGs_archived31Jan2025(molecule_list, atom_list, box=[]):
                 )
     return COGs
 
-
 def assign_voxel_IDs_to_COGs_archived31Jan2025(COGs: list, voxels: Voxels) -> list:
     voxel_origin_to_ID = {
         origin: voxels.IDs[idx] for idx, origin in enumerate(voxels.origins)
