@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from copy import deepcopy
+from typing import Union
 
 from hybrid_mdmc.data_file_parser import parse_data_file
 from hybrid_mdmc.diffusion import (
@@ -146,6 +147,7 @@ def main(argv):
                 args.lammps_time_units_to_seconds_conversion,
                 trajectory_frames,
                 filename_mvabfa,
+                logfile=file_log,
             )
 
         # Read the molecular voxel assignments by frame array file
@@ -290,6 +292,7 @@ def calculate_and_write_mvabfa(
     time_conversion: float,
     trajectory_frames: list,
     filename_mvabfa: str,
+    logfile: Union[None, utility.FileTracker] = None,
 ) -> None:
     """Calculate molecular voxel assignments by frame array and write to file.
 
@@ -324,6 +327,7 @@ def calculate_and_write_mvabfa(
         start=trajectory_frames[0],
         end=trajectory_frames[1],
         every=trajectory_frames[2],
+        logfile=logfile,
     )
     output = np.concatenate(
         (

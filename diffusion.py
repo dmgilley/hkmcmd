@@ -4,8 +4,10 @@
 #   dgilley@purdue.edu
 
 
+import datetime
 import numpy as np
 from typing import Union
+from hybrid_mdmc import utility
 from hybrid_mdmc.frame_generator import frame_generator
 from hybrid_mdmc.classes import MoleculeList
 from hybrid_mdmc.mol_classes import AtomList
@@ -82,6 +84,7 @@ class Diffusion:
         start: int = 0,
         end: int = -1,
         every: int = 1,
+        logfile: Union[None, utility.FileTracker] = None,
     ) -> tuple:
         """Calculate the molecular voxel assignments by frame.
 
@@ -113,6 +116,7 @@ class Diffusion:
             start=start,
             end=end,
             every=every,
+            logfile=logfile,
         )
         self.molecular_voxel_assignments_by_frame_array = result[0]
         self.timesteps = result[1]
@@ -325,6 +329,7 @@ def calculate_molecular_voxel_assignments_by_frame_array(
     start: int = 0,
     end: int = -1,
     every: int = 1,
+    logfile: Union[None, utility.FileTracker] = None,
 ) -> tuple:
     """
     Calculate the "molecular voxel assignment by frame" array.
@@ -360,6 +365,7 @@ def calculate_molecular_voxel_assignments_by_frame_array(
         [idx for idx, _ in enumerate(atoms_datafile.mol_id) if idx != aidx and _ == mol]
         for aidx, mol in enumerate(atoms_datafile.mol_id)
     ]
+    generator_step = 0
     for atoms_thisframe, timestep, box_thisframe in frame_generator(
         filename_trajectory,
         start=start,
@@ -369,6 +375,9 @@ def calculate_molecular_voxel_assignments_by_frame_array(
         adj_list=adj_list,
         return_prop=False,
     ):
+        generator_step += 1
+        if logfile is not None and generator_step % 20 == 0:
+            logfile.write(f"Frame {generator_step} of {end} parsed.\n")
         all_timesteps.append(int(timestep))
         voxels_thisframe = Voxels(box_thisframe, number_of_voxels)
         molecules_thisframe = MoleculeList(
@@ -380,12 +389,6 @@ def calculate_molecular_voxel_assignments_by_frame_array(
         molecules_thisframe.assign_voxel_idxs(
             voxels_thisframe.origins, voxels_thisframe.boundaries
         )
-        # molecules_thisframe_COGs = calculate_molecule_COGs(
-        #    molecules_thisframe, atoms_thisframe, box=box_thisframe
-        # )
-        # molecules_thisframe_voxel_IDs = assign_voxel_IDs_to_COGs(
-        #    molecules_thisframe_COGs, voxels_thisframe
-        # )
         molecular_voxel_assignment_by_frame_dict[int(timestep)] = (
             molecules_thisframe.voxel_idxs
         )

@@ -545,6 +545,49 @@ def get_voxel_distance_groupings(voxels: Voxels) -> tuple:
 
 def test():
 
+    # create_voxel_boundaries_dictionary
+    # calculate_shaft_overlap_idxs_1D
+    # find_voxel_neighbors_with_shaft_overlap_method
+    # assign_voxel_idx_to_given_COG
+    # get_voxel_distance_groupings
+
+    # create_voxel_boundaries_dictionary
+    # find voxel neighbors
+    # assign voxel ID to given COG
+    # get separation distance groupings
+
+    # box: list
+    #     Box dimensions, [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ].
+    # number of voxels: list
+    #     Number of voxels in each dimension (length of three).
+    # xbounds: list
+    #     X bounds for voxels, flattened. Voxel with index i has x bounds
+    #         [xbounds[i], xbounds[i+1]].
+    # ybounds: list
+    #     Y bounds for voxels, flattened. Voxel with index i has y bounds
+    #         [ybounds[i], ybounds[i+1]].
+    # zbounds: list
+    #     Z bounds for voxels, flattened. Voxel with index i has z bounds
+    #         [zbounds[i], zbounds[i+1]].
+    # boundaries_dict: dict
+    #     Keys: voxel idx
+    #     Values: [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ]
+    # IDs: np.ndarray
+    #     Voxel IDs (equal to voxel indices).
+    # boundaries: list
+    #     Voxel boundaries, [ [xmin,xmax], [ymin,ymax], [zmin,ymax] ]
+    # origins: list
+    #     Voxel origin coordinates, [x,y,z].
+    # centers: np.ndarray
+    #     Voxel center coordinates, [x,y,z].
+    # neighbors_dict: dict
+    #     Keys: voxel idx
+    #     Values: list of voxel indices that are neighbors to the key voxel.
+    # separation_groupings_dict: dict
+    #     Keys: separation distance
+    #     Values: list of tuples of voxel indices that are separated by the key
+    #         separation distance.
+
     # inconsistent box, number_of_voxels, bounds
     # voxel boundaries dictionary
     # idx to ID
