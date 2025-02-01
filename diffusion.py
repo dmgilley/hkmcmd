@@ -377,7 +377,7 @@ def calculate_molecular_voxel_assignments_by_frame_array(
     ):
         generator_step += 1
         if logfile is not None and generator_step % 20 == 0:
-            logfile.write(f"Frame {generator_step} of {end} parsed.\n")
+            logfile.write(f"    {generator_step} frames parsed... {datetime.datetime.now()}\n")
         all_timesteps.append(int(timestep))
         voxels_thisframe = Voxels(box_thisframe, number_of_voxels)
         molecules_thisframe = MoleculeList(

@@ -136,7 +136,7 @@ def main(argv):
         if not os.path.isfile(filename_mvabfa):
             file_log.write(f"  {filename_mvabfa} not found.\n")
             file_log.write(
-                f"  parsing {args.filename_trajectory} (frame {trajectory_frames[0]} to {trajectory_frames[1]} by every {trajectory_frames[2]} frames)... {datetime.datetime.now()} \n\n"
+                f"  parsing {args.filename_trajectory} (frame {trajectory_frames[0]} to {trajectory_frames[1]} by every {trajectory_frames[2]} frames)... {datetime.datetime.now()} \n"
             )
             calculate_and_write_mvabfa(
                 args.prefix,
@@ -174,7 +174,7 @@ def main(argv):
             if total_frames > mvabfa.shape[0]:
                 break
             file_log.write(
-                f"  calculating direct transition rates using the first {total_frames} trajectory frames... {datetime.datetime.now()} \n\n"
+                f"\n  calculating direct transition rates using the first {total_frames} trajectory frames... {datetime.datetime.now()} \n\n"
             )
 
             diffusion = Diffusion(
