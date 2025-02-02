@@ -22,7 +22,7 @@ from hybrid_mdmc.customargparse import HMDMC_ArgumentParser
 from hybrid_mdmc.voxels import Voxels
 from hybrid_mdmc.classes import MoleculeList
 from hybrid_mdmc.mol_classes import AtomList
-from functions import gen_molecules
+from hybrid_mdmc.functions import gen_molecules
 from hybrid_mdmc import utility
 
 
@@ -138,6 +138,7 @@ def main(argv):
             file_log.write(
                 f"  parsing {args.filename_trajectory} (frame {trajectory_frames[0]} to {trajectory_frames[1]} by every {trajectory_frames[2]} frames)... {datetime.datetime.now()} \n"
             )
+            file_mvabfa = utility.FileTracker(filename_mvabfa)
             calculate_and_write_mvabfa(
                 args.prefix,
                 args.filename_trajectory,
@@ -146,7 +147,7 @@ def main(argv):
                 voxels_datafile,
                 args.lammps_time_units_to_seconds_conversion,
                 trajectory_frames,
-                filename_mvabfa,
+                file_mvabfa,
                 logfile=file_log,
             )
 
@@ -291,7 +292,7 @@ def calculate_and_write_mvabfa(
     voxels_datafile: Voxels,
     time_conversion: float,
     trajectory_frames: list,
-    filename_mvabfa: str,
+    file_mvabfa: utility.FileTracker,
     logfile: Union[None, utility.FileTracker] = None,
 ) -> None:
     """Calculate molecular voxel assignments by frame array and write to file.
@@ -315,6 +316,22 @@ def calculate_and_write_mvabfa(
     None
     """
 
+    # Write preliminary info to mvabfa file
+    output = np.concatenate(
+        (
+            molecules_datafile.ids.reshape(1, -1),
+            molecules_datafile.mol_types.reshape(1, -1),
+        )
+    )
+    output = pd.DataFrame(
+        output,
+        index=["MoleculeIDs", "MoleculeTypes"],
+    )
+    file_mvabfa.write(f"# array calculated by parsing {filename_trajectory}\n\n")
+    file_mvabfa.write(output.to_string(index=True, header=False))
+    file_mvabfa.write("\n\n")
+
+    # Calculate and write mvabfa
     diffusion = Diffusion(
         prefix,
         filename_trajectory,
@@ -328,30 +345,8 @@ def calculate_and_write_mvabfa(
         end=trajectory_frames[1],
         every=trajectory_frames[2],
         logfile=logfile,
+        file_mvabfa=file_mvabfa,
     )
-    output = np.concatenate(
-        (
-            molecules_datafile.ids.reshape(1, -1),
-            molecules_datafile.mol_types.reshape(1, -1),
-            diffusion.molecular_voxel_assignments_by_frame_array,
-        )
-    )
-    output = pd.DataFrame(
-        output,
-        index=["MoleculeIDs", "MoleculeTypes"]
-        + [
-            f"Frame {i}"
-            for i in range(
-                1,
-                diffusion.molecular_voxel_assignments_by_frame_array.shape[0] + 1,
-            )
-        ],
-    )
-    file_mvabfa = utility.FileTracker(filename_mvabfa)
-    file_mvabfa.write(f"# array calculated by parsing {filename_trajectory}\n\n\n")
-    file_mvabfa.write(output.to_string(index=True, header=False))
-    timesteps_string = " ".join(map(str, diffusion.timesteps))
-    file_mvabfa.write(f"\n\ntimesteps {timesteps_string}\n")
 
     return
 
@@ -400,7 +395,7 @@ def read_mvabfa_file(
         molecule_ids,
         molecule_types,
         np.array([v for k, v in sorted(mvabfa.items())]),
-        timesteps,
+        np.array([int(_) for _ in sorted(mvabfa.keys())]).flatten(),
     )
 
 
