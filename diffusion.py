@@ -398,7 +398,7 @@ def calculate_molecular_voxel_assignments_by_frame_array(
             logfile.write(
                 f"    {generator_step} frames parsed... {datetime.datetime.now()}\n"
             )
-        if file_mvabfa is not None and generator_step % 2 == 0:
+        if file_mvabfa is not None and generator_step % 40 == 0:
             molecular_voxel_assignment_by_frame_array = np.array(
                 [
                     value
