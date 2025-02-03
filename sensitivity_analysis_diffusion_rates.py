@@ -130,13 +130,12 @@ def main(argv):
     # Voxel transition rate sensitivity
     if args.calculate_direct_transition_sensitivity is True:
         file_log.write(
-            f"\ncalculating direct transition rate sensitivity analysis... {datetime.datetime.now()} \n\n"
+            f"\ncalculating direct transition rate sensitivity analysis... {datetime.datetime.now()}\n"
         )
         # If a molecular voxel assignments by frame array file does not exist, the trajectory file must be parsed to create one.
         if not os.path.isfile(filename_mvabfa):
-            file_log.write(f"  {filename_mvabfa} not found.\n")
             file_log.write(
-                f"  parsing {args.filename_trajectory} (frame {trajectory_frames[0]} to {trajectory_frames[1]} by every {trajectory_frames[2]} frames)... {datetime.datetime.now()} \n"
+                f"\n  {filename_mvabfa} not found; parsing {args.filename_trajectory}... {datetime.datetime.now()}\n"
             )
             file_mvabfa = utility.FileTracker(filename_mvabfa)
             calculate_and_write_mvabfa(
@@ -165,6 +164,7 @@ def main(argv):
         # Loop over each total number of frames, create a Diffusion instance, manually set the
         # molecular voxel assignments by frame array, calcule the direct transition rates, and
         # write the result to the output file.
+        file_log.write(f"\n  calculating direct transition rates... {datetime.datetime.now()}\n")
         if direct_transition_frames[1] == -1:
             direct_transition_frames[1] = mvabfa.shape[0]
         for total_frames in np.arange(
@@ -175,7 +175,7 @@ def main(argv):
             if total_frames > mvabfa.shape[0]:
                 break
             file_log.write(
-                f"\n  calculating direct transition rates using the first {total_frames} trajectory frames... {datetime.datetime.now()} \n\n"
+                f"    calculating direct transition rates using the first {total_frames} trajectory frames... {datetime.datetime.now()}\n"
             )
 
             diffusion = Diffusion(
@@ -212,7 +212,7 @@ def main(argv):
     # Random walk rate sensitivity
     if args.calculate_random_walk_sensitivity is True:
         file_log.write(
-            f"\ncalculating random walk rate sensitivity analysis... {datetime.datetime.now()} \n\n"
+            f"\ncalculating random walk rate sensitivity analysis... {datetime.datetime.now()}\n"
         )
 
         direct_voxel_transition_rates = {}
@@ -233,12 +233,12 @@ def main(argv):
         # loop over walk lengths
         for walk_length in random_walk_lengths:
             file_log.write(
-                f"  calculating random walk rates using a walk length of {walk_length}... {datetime.datetime.now()} \n"
+                f"\n  calculating random walk rates using a walk length of {walk_length}... {datetime.datetime.now()}\n"
             )
 
             # loop over walk replicates
             for rep in random_walk_replicates:
-                file_log.write(f"    replicate {rep}... {datetime.datetime.now()} \n")
+                file_log.write(f"    replicate {rep}... {datetime.datetime.now()}\n")
 
                 # declare new diffusion instance
                 diffusion = Diffusion(
