@@ -82,6 +82,7 @@ class Voxels:
         )
         self.neighbors_dict = self.find_voxel_neighbors()
         self.separation_groupings_dict = self.get_separation_distance_groupings_dict()
+        self.voxel_idxs_by_distance_groupings = self.get_voxel_idxs_by_distance_groupings()
 
         return
 
@@ -114,6 +115,12 @@ class Voxels:
             d: list(zip(groupings[didx][0], groupings[didx][1]))
             for didx, d in enumerate(distances)
         }
+    
+    def get_voxel_idxs_by_distance_groupings(self):
+        return [
+            tuple([np.array(_) for _ in zip(*v)])
+            for k, v in sorted(self.separation_groupings_dict.items())
+        ]
 
 
 def canonicalize_voxel_inputs(

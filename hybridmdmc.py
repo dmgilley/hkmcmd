@@ -13,9 +13,10 @@ from hybrid_mdmc.customargparse import HMDMC_ArgumentParser
 from hybrid_mdmc.classes import *
 from hybrid_mdmc.parsers import *
 from hybrid_mdmc.kmc import *
-from functions import *
+from hybrid_mdmc.functions import *
 from hybrid_mdmc.voxels import Voxels
 from hybrid_mdmc.diffusion import Diffusion
+from hybrid_mdmc import utility
 
 
 # Main argument
@@ -209,6 +210,9 @@ def main(argv):
     }
     if args.well_mixed is False:
         if args.track_diffusion is True:
+            filename_mvabfa = args.prefix + ".mvabfa.txt"
+            file_mvabfa = utility.FileTracker(filename_mvabfa)
+            species = sorted(list(masterspecies.keys()))
             diffusion = Diffusion(
                 args.prefix,
                 args.filename_trajectory,
@@ -218,27 +222,34 @@ def main(argv):
                 time_conversion=args.lammps_time_units_to_seconds_conversion,
             )
             diffusion.calculate_molecular_voxel_assignments_by_frame(
-                start=0, end=-1, every=1
+                file_mvabfa=file_mvabfa,
             )
-            diffusion.calculate_direct_voxel_transition_rates()
-            diffusion.perform_random_walks(number_of_steps=864, species="A")
-            diffusion.calculate_average_first_time_between_positions(species="A")
-            diffusion.calculate_diffusion_rates(species="A")
-            diffusion_rate["A"] = diffusion.diffusion_rates["A"]
+            _, mvabfa_molecule_types, mvabfa, mvabfa_timesteps = (
+                diffusion.read_mvabfa_file(filename_mvabfa)
+            )
+            diffusion.molecular_voxel_assignments_by_frame_array = deepcopy(mvabfa)
+            diffusion.timesteps = deepcopy(mvabfa_timesteps)
+            diffusion.calculate_direct_voxel_transition_rates(
+                average_across_voxel_neighbors=True
+            )
+            diffusion.calculate_diffusion_rates(
+                starting_position_idxs=np.array(
+                    [list(range(np.prod(voxels_datafile.number_of_voxels)))] * 10
+                ).flatten(),  # effectively 10 walks with a walker starting in each voxel
+                number_of_steps=900, # sensitivity analysis shows good response to 900
+            )
+            diffusion_rate = diffusion.diffusion_rates
+            with open(args.filename_diffusion, "a") as f:
+                for k, v in sorted(diffusion_rate.items()):
+                    f.write("\nDiffusion Rates for {}\n".format(k))
+                    for row in v:
+                        f.write("{}\n".format(" ".join([str(_) for _ in row])))
         else:
             diffusion_rate = parse_diffusion_file(args.filename_diffusion)
             diffusion_rate = {k: v[0, :, :] for k, v in diffusion_rate.items()}
 
     if args.debug:
         breakpoint()
-
-    # Append the diffusion file
-    if args.track_diffusion is True:
-        with open(args.filename_diffusion, "a") as f:
-            for k, v in sorted(diffusion_rate.items()):
-                f.write("\nDiffusion Rates for {}\n".format(k))
-                for row in v:
-                    f.write("{}\n".format(" ".join([str(_) for _ in row])))
 
     # Begin the KMC loop
     molecount_starting, molecount_current = len(sorted(set(atoms.mol_id))), len(

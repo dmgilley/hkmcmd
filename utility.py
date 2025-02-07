@@ -66,12 +66,12 @@ def histo_getbins(times, num_of_bins=100, tmin=None, tmax=None):
 
 
 def combine_sample_set_statistics(observations, means, stds):
-    observation_combined = np.sum(observations)
-    mean_combined = np.sum(means * observations) / observation_combined
+    observation_combined = np.sum(observations, axis=-1)
+    mean_combined = np.sum(means * observations, axis=-1) / observation_combined
     variances = stds**2
-    ds = (means - mean_combined) ** 2
+    ds = (means - mean_combined[...,np.newaxis]) ** 2
     std_combined = np.sqrt(
-        np.sum(observations * (variances + ds)) / observation_combined
+        np.sum(observations * (variances + ds), axis=-1) / observation_combined
     )
     return observation_combined, mean_combined, std_combined
 

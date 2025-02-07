@@ -130,6 +130,7 @@ class Diffusion:
         start: int = 0,
         end: int = -1,
         every: int = 1,
+        average_across_voxel_neighbors: bool = False,
     ) -> dict:
         """Calculate the direct voxel transition rates.
 
@@ -163,9 +164,16 @@ class Diffusion:
         self.direct_voxel_transition_rates = calculate_direct_voxel_transition_rates(
             np.prod(self.number_of_voxels),
             self.molecular_voxel_assignments_by_frame_array,
-            (self.timesteps[-1] - self.timesteps[0]) * time_conversion,
+            # (self.timesteps[-1] - self.timesteps[0]) * time_conversion, # ERROR ERROR ERROR
+            (self.timesteps[1] - self.timesteps[0]) * time_conversion,
             self.molecules_datafile,
         )
+        if average_across_voxel_neighbors is True:
+            for voxel_idxs in self.voxels.voxel_idxs_by_distance_groupings:
+                for species in self.direct_voxel_transition_rates.keys():
+                    self.direct_voxel_transition_rates[species][voxel_idxs] = np.mean(
+                        self.direct_voxel_transition_rates[species][voxel_idxs]
+                    )
         return self.direct_voxel_transition_rates
 
     def perform_random_walks(
@@ -445,7 +453,7 @@ def calculate_molecular_voxel_assignments_by_frame_array(
 def calculate_direct_voxel_transition_rates(
     total_number_of_voxels: int,
     molecular_voxel_assignment_by_frame_array: np.ndarray,
-    total_time: float,
+    adjacent_transition_time: float,
     molecules_datafile: MoleculeList,
 ) -> dict:
     """
@@ -453,8 +461,8 @@ def calculate_direct_voxel_transition_rates(
 
     This function calculates the direct voxel transition rates, which are the rates at which
     molecules transition from one voxel to another. This is done by counting the number of
-    transitions from one voxel to another for each molecule type, and dividing by the total time
-    elapsed.
+    transitions from one voxel to another for each molecule type, and dividing by time between
+    adjacent frames in teh trajectory file.
 
     NOTE No neighbor mask is applied.
     NOTE Rates for a molecule to remain in a voxel (i.e. the matrix diagonal) ARE included.
@@ -464,7 +472,7 @@ def calculate_direct_voxel_transition_rates(
     total_number_of_voxels (int): Total number of voxels.
     molecular_voxel_assignment_by_frame_array (np.ndarray): Array of N frames by M molecules, where
         entry i,j is the voxel in which molecule j is located at frame i.
-    total_time (float): Total time elapsed between the first and last frame in the trajectory file.
+    adjacent_transition_time (float): Time between adjacent frames.
     molecules_datafile (MoleculeList): MoleculeList instance indexed to the column order of the
         molecular_voxel_assignment_by_frame_array.
 
@@ -488,7 +496,7 @@ def calculate_direct_voxel_transition_rates(
         for idx, tf in enumerate((to_from)):
             voxel_transition_counts[type_][tf[0], tf[1]] += count[idx]
     return {
-        mol_type: vt_counts / total_time
+        mol_type: vt_counts / adjacent_transition_time
         for mol_type, vt_counts in voxel_transition_counts.items()
     }
 
@@ -604,155 +612,3 @@ def calculate_average_first_time_between_positions(
     return (
         np.where(transition_counts == 0, np.inf, transition_times) / transition_counts
     )
-
-
-#################################### deprecated ####################################
-# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv #
-
-
-def calculate_molecule_COGs_archived31Jan2025(molecule_list, atom_list, box=[]):
-    COGs = np.array(
-        [
-            np.mean(
-                np.array(
-                    [
-                        [atom_list.x[idx], atom_list.y[idx], atom_list.z[idx]]
-                        for idx, ID in enumerate(atom_list.ids)
-                        if ID in matoms
-                    ]
-                ),
-                axis=0,
-            )
-            for matoms in molecule_list.atom_ids
-        ]
-    )
-    if len(box) != 0:
-        for d in range(3):
-            while not np.all(COGs[:, d] >= box[d][0]):
-                COGs[:, d] = np.where(
-                    COGs[:, d] >= box[d][0],
-                    COGs[:, d],
-                    COGs[:, d] + (box[d][1] - box[d][0]),
-                )
-            while not np.all(COGs[:, d] <= box[d][1]):
-                COGs[:, d] = np.where(
-                    COGs[:, d] <= box[d][1],
-                    COGs[:, d],
-                    COGs[:, d] - (box[d][1] - box[d][0]),
-                )
-    return COGs
-
-
-def assign_voxel_IDs_to_COGs_archived31Jan2025(COGs: list, voxels: Voxels) -> list:
-    voxel_origin_to_ID = {
-        origin: voxels.IDs[idx] for idx, origin in enumerate(voxels.origins)
-    }
-    x_voxel_minima = np.array(voxels.boundaries)[:, 0, 0]
-    y_voxel_minima = np.array(voxels.boundaries)[:, 1, 0]
-    z_voxel_minima = np.array(voxels.boundaries)[:, 2, 0]
-    COG_nearest_minima = [
-        tuple(
-            [
-                x_voxel_minima[np.argwhere(COG[0] >= x_voxel_minima)[-1][0]],
-                y_voxel_minima[np.argwhere(COG[1] >= y_voxel_minima)[-1][0]],
-                z_voxel_minima[np.argwhere(COG[2] >= z_voxel_minima)[-1][0]],
-            ]
-        )
-        for COG in COGs
-    ]
-    return [voxel_origin_to_ID[origin] for origin in COG_nearest_minima]
-
-
-def perform_random_walks0_archived20Jan2025(
-    transfer_rates, starting_position_idxs, number_of_steps
-):
-    rate_sums = np.sum(transfer_rates, axis=1)
-    transfer_rates = np.cumsum(transfer_rates, axis=1)
-    walkers_position = np.zeros((number_of_steps + 1, len(transfer_rates)), dtype=int)
-    walkers_position[0] = starting_position_idxs.flatten()
-    walkers_time = np.zeros(
-        (number_of_steps + 1, len(transfer_rates)), dtype=np.float64
-    )
-    for step in range(number_of_steps):
-        u1 = (
-            np.random.rand(1, starting_position_idxs.flatten().shape[0])
-            * np.array([rate_sums[idx] for idx in walkers_position[step]]).flatten()
-        )
-        walkers_position[step + 1] = [
-            np.argwhere(transfer_rates[walkers_position[step, idx]] >= u)[0][0]
-            for idx, u in enumerate(u1[0])
-        ]
-        u2 = 1 - np.random.rand(
-            1, starting_position_idxs.flatten().shape[0]
-        )  # exclude 0
-        u2 = u2.flatten()[0]
-        dt = -np.log(u2) / rate_sums[walkers_position[step]]
-        walkers_time[step + 1] = walkers_time[step] + dt
-    return walkers_position, walkers_time
-
-
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #
-#################################### deprecated ####################################
-
-
-def test():
-    number_of_voxels = 6
-    transition_probabilities = {
-        1: [0.0, 0.5, 0.2, 0.1, 0.1, 0.1],
-        2: [0.1, 0.0, 0.2, 0.1, 0.4, 0.2],
-        3: [0.1, 0.1, 0.0, 0.2, 0.2, 0.4],
-        4: [0.2, 0.1, 0.1, 0.0, 0.5, 0.1],
-        5: [0.1, 0.2, 0.2, 0.5, 0.0, 0.0],
-        6: [0.2, 0.1, 0.4, 0.1, 0.2, 0.0],
-    }
-    transition_probabilities_array = np.array(
-        [v for k, v in sorted(transition_probabilities.items())]
-    )
-
-    number_of_molecues = 200
-    number_of_steps = 1000
-    paths = {}
-    for midx in range(number_of_molecues):
-        paths[midx] = [midx % 6]
-        for step in range(1, number_of_steps):
-            paths[midx].append(
-                np.random.choice(
-                    list(range(number_of_voxels)),
-                    p=transition_probabilities[paths[midx][-1] + 1],
-                )
-            )
-    molecular_voxel_assignment_by_frame_array = np.array(
-        [paths[midx] for midx in range(number_of_molecues)]
-    ).transpose()
-    mtype = np.array(
-        [1] * int(number_of_molecues / 2) + [2] * int(number_of_molecues / 2)
-    )
-    np.random.shuffle(mtype)
-
-    molecules_test = MoleculeList()
-    molecules_test.mol_types = mtype
-    direct_voxel_transition_rates = calculate_direct_voxel_transition_rates(
-        number_of_voxels, molecular_voxel_assignment_by_frame_array, 1, molecules_test
-    )
-
-    for k, v in direct_voxel_transition_rates.items():
-        np.fill_diagonal(v, 0)
-        for ridx, row in enumerate(v):
-            v[ridx] = row / np.sum(row)
-        print()
-        print(f"Molecule Type {k}")
-        error = (
-            np.divide(
-                np.abs((v - transition_probabilities_array)),
-                transition_probabilities_array,
-                where=transition_probabilities_array != 0,
-            )
-            * 100
-        )
-        print(error)
-        print(np.max(np.abs(error)))
-    return
-
-
-if __name__ == "__main__":
-    test()
