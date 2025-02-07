@@ -161,7 +161,7 @@ def get_rxns_serial(
     # requested, all diffusion rates are np.inf/all reaction scalings
     # are 1.
 
-    voxelID2idx = {vID: idx for idx, vID in enumerate(voxels.voxel_IDs)}
+    voxelID2idx = {vID: idx for idx, vID in enumerate(voxels.IDs)}
     reactions, number_of_reactions = {}, 0
     cycle = rxnscaling.index[-1]
 
@@ -212,8 +212,8 @@ def get_rxns_serial(
                 [
                     [
                         diffusion_rate[molecules.mol_types[molidx_i]][
-                            voxelID2idx[molecules.voxels[molidx_i]],
-                            voxelID2idx[molecules.voxels[molidx_j]],
+                            voxelID2idx[molecules.voxel_idxs[molidx_i]],
+                            voxelID2idx[molecules.voxel_idxs[molidx_j]],
                         ]
                         for molidx_j in reactive_molecule_idxs_j
                     ]
@@ -224,8 +224,8 @@ def get_rxns_serial(
                 [
                     [
                         diffusion_rate[molecules.mol_types[molidx_j]][
-                            voxelID2idx[molecules.voxels[molidx_j]],
-                            voxelID2idx[molecules.voxels[molidx_i]],
+                            voxelID2idx[molecules.voxel_idxs[molidx_j]],
+                            voxelID2idx[molecules.voxel_idxs[molidx_i]],
                         ]
                         for molidx_i in reactive_molecule_idxs_i
                     ]
@@ -363,7 +363,7 @@ def get_rxns(
         [
             molecules.ids[idx]
             for idx in range(len(molecules.ids))
-            if molecules.voxels[idx] == vox
+            if molecules.voxel_idxs[idx] == vox
         ]
     )  # Get molecule IDs for the reactive species
     rxns, rxn_count = {}, 1
@@ -404,7 +404,7 @@ def get_rxns(
                     _
                     for _ in molecules.ids
                     if diffusion_rates[molecules.mol_types[molID2idx[rmID]]][
-                        voxelID2idx[vox], voxelID2idx[molecules.voxels[molID2idx[_]]]
+                        voxelID2idx[vox], voxelID2idx[molecules.voxel_idxs[molID2idx[_]]]
                     ]
                     >= diffusion_cutoff
                     and molecules.mol_types[molID2idx[_]] == reactant_types[0]
@@ -415,7 +415,7 @@ def get_rxns(
                     timeofdiffusion = 1 / (
                         diffusion_rates[molecules.mol_types[molID2idx[rmID]]][
                             voxelID2idx[vox],
-                            voxelID2idx[molecules.voxels[molID2idx[pID]]],
+                            voxelID2idx[molecules.voxel_idxs[molID2idx[pID]]],
                         ]
                     )
                     timeofrxn = 1 / (

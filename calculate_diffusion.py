@@ -55,9 +55,6 @@ def main(argv):
     # Create and populate an instance of the "MoleculeList" class.
     molecules = gen_molecules(atoms, atomtypes2moltype, voxels_datafile)
 
-    breakpoint()
-
-    ###################################################################
     filename_mvabfa = args.prefix + ".mvabfa.txt"
     file_mvabfa = utility.FileTracker(filename_mvabfa)
     calculate_and_write_mvabfa(
@@ -71,13 +68,9 @@ def main(argv):
         file_mvabfa,
         logfile=None,
     )
-    breakpoint()
-
     _, mvabfa_molecule_types, mvabfa, mvabfa_timesteps = (
         read_mvabfa_file(filename_mvabfa)
     )
-    breakpoint()
-
     diffusion = Diffusion(
         args.prefix,
         args.filename_trajectory,
@@ -100,9 +93,6 @@ def main(argv):
         file_direct_rates.write(
                     output_df.to_string(index=False, header=False)
                 )
-        
-    breakpoint()
-
     diffusion.calculate_diffusion_rates(
         starting_position_idxs=np.array(
             [list(range(np.prod(voxels_datafile.number_of_voxels)))] * 10
@@ -110,46 +100,15 @@ def main(argv):
         number_of_steps=90, # sensitivity analysis shows good response to 900
     )
     diffusion_rate = diffusion.diffusion_rates
-    with open(args.filename_diffusion, "a") as f:
-        for k, v in sorted(diffusion_rate.items()):
-            f.write("\nDiffusion Rates for {}\n".format(k))
-            for row in v:
-                f.write("{}\n".format(" ".join([str(_) for _ in row])))
-
-    return
-
-    # Initialize Diffusion and calculate rate for each of the requested species
-    diffusion = Diffusion(
-        args.prefix,
-        args.filename_trajectory,
-        atoms,
-        molecules,
-        voxels_datafile,
-        time_conversion=args.lammps_time_units_to_seconds_conversion,
-    )
-    diffusion.calculate_molecular_voxel_assignments_by_frame(start=0, end=-1, every=1)
-    diffusion.calculate_direct_voxel_transition_rates()
-
-    # If requested, calculate the diffusion rate for each species.
-    diffusion_rate = {
-        species: np.full(
-            (len(voxels_datafile.IDs), len(voxels_datafile.IDs)), fill_value=np.inf
-        )
-        for species in masterspecies.keys()
-    }
-    for species in args.diffusion_species:
-        diffusion.perform_random_walks(number_of_steps=150, species=species)
-        diffusion.calculate_average_first_time_between_positions(species=species)
-        diffusion.calculate_diffusion_rates(species=species)
-        diffusion_rate[species] = diffusion.diffusion_rates[species]
-
-    # Write output
-    with open(args.filename_diffusion, "w") as f:
-        f.write("\n{}\n\nDiffusionStep {}\n".format("-" * 75, 0))
-        for k, v in sorted(diffusion_rate.items()):
-            f.write("\nDiffusion Rates for {}\n".format(k))
-            for row in v:
-                f.write("{}\n".format(" ".join([str(_) for _ in row])))
+    file_diffusion = utility.FileTracker(args.filename_diffusion)
+    file_diffusion.write("\n\n---------------------------------------------------------------------------\n\n")
+    file_diffusion.write(f"\nDiffusionStep 0\n")
+    for k, v in sorted(diffusion_rate.items()):
+        output_df = pd.DataFrame(v)
+        file_diffusion.write(f"\n\nDiffusion Rates for {k}\n")
+        file_diffusion.write(
+                    output_df.to_string(index=False, header=False)
+                )
 
     return
 
