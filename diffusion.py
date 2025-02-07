@@ -313,7 +313,7 @@ class Diffusion:
         if not isinstance(species, list):
             species = [species]
         if species[0] == "all":
-            species = self.molecules_datafile.mol_types
+            species = sorted(list(set(self.molecules_datafile.mol_types)))
         if self.random_walk_average_first_time_between_positions is None:
             self.perform_random_walks(
                 starting_position_idxs=starting_position_idxs,
