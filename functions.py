@@ -404,7 +404,8 @@ def get_rxns(
                     _
                     for _ in molecules.ids
                     if diffusion_rates[molecules.mol_types[molID2idx[rmID]]][
-                        voxelID2idx[vox], voxelID2idx[molecules.voxel_idxs[molID2idx[_]]]
+                        voxelID2idx[vox],
+                        voxelID2idx[molecules.voxel_idxs[molID2idx[_]]],
                     ]
                     >= diffusion_cutoff
                     and molecules.mol_types[molID2idx[_]] == reactant_types[0]
@@ -638,6 +639,28 @@ def find_dist_same(geo, box):
     rs = np.sqrt(rs)
 
     return rs
+
+
+def calculate_HKMCMD_molecule_types_from_LAMMPS_atom_types(atoms, master_species):
+
+    tuple_of_LAMMPS_atom_types_to_HKMCMD_molecule_type = {}
+    for k, v in master_species.items():
+        tuple_of_LAMMPS_atom_types_to_HKMCMD_molecule_type[
+            tuple(sorted([i[2] for i in v["Atoms"]]))
+        ] = k
+
+    HKMCMD_molecule_types = np.array(["not assigned"] * len(atoms.ids)).flatten()
+    for LAMMPS_molecule_ID in sorted(list(set(atoms.mol_id))):
+        idxs = [
+            idx for idx, LmID in enumerate(atoms.mol_id) if LmID == LAMMPS_molecule_ID
+        ]
+        HKMCMD_molecule_types[idxs] = (
+            tuple_of_LAMMPS_atom_types_to_HKMCMD_molecule_type[
+                tuple(sorted(atoms.lammps_type[idxs]))
+            ]
+        )
+
+    return HKMCMD_molecule_types
 
 
 def get_progression(

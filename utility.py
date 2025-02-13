@@ -4,7 +4,7 @@
 #    dgilley@purdue.edu
 
 
-import datetime, inspect, traceback
+import datetime, os
 import numpy as np
 import pandas as pd
 import scipy.spatial.distance as sds
@@ -91,23 +91,35 @@ def LJtimesteps_to_seconds(LJtimesteps, m, s, e, lammps_stepsize=0.001):
 
 class FileTracker:
 
-    def __init__(self, name):
+    def __init__(self, name, overwrite=False):
         self.name = name
-        self.calling_script = None
-        frame = inspect.currentframe().f_back
-        #script_filename = frame.f_globals.get("__file__", None)
-        #if script_filename is not None:
-        #    with open(script_filename, "r") as script_file:
-        #        self.calling_script = script_file.read()
+        if overwrite is True or not os.path.exists(self.name):
+            self.create()
+        return
+    
+    def create(self):
         with open(self.name, "w") as f:
             f.write(f"# File created {datetime.datetime.now()}\n")
-        #    if self.calling_script is not None:
-        #        f.write(f"# Created during execution of {self.calling_script}\n")
         return
 
     def write(self, string):
         with open(self.name, "a") as f:
             f.write(string)
+        return
+    
+    def write_separation(self, sep="-"):
+        with open(self.name, "a") as f:
+            f.write(f"\n{sep * 100}\n")
+        return
+    
+    def write_array(self, array, asstr=True):
+        preamble = ""
+        if type(array) is tuple:
+            preamble, array = array[0], array[1]
+        if asstr is True:
+            array = np.array_str(array,max_line_width=1e99)[1:-1]
+        with open(self.name, "a") as f:
+            f.write(f"{preamble}{array}\n")
         return
 
 
