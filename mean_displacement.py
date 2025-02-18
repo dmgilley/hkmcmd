@@ -189,7 +189,7 @@ def assemble_molecular_cog(
         if not np.all(molecular_ids == molecules_thisframe.ids):
             raise ValueError("Molecular IDs do not match across frames.")
         molecules_thisframe.get_cog(atoms_thisframe)
-        molecular_cog[timestep_thisframe] = molecules_thisframe.cogs
+        molecular_cog[int(timestep_thisframe)] = molecules_thisframe.cogs
     frames = sorted(list(molecular_cog.keys()))
     molecular_cog = [v for k, v in sorted(molecular_cog.items())]
     molecular_cog_array = np.array(molecular_cog)

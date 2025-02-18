@@ -124,7 +124,10 @@ def frame_generator(
                 ):
                     frame_flag = 1
                     frame_count += 1
-                elif frame > end:
+                elif (
+                        frame > end
+                        and end != -1
+                ):
                     break
             # Parse commands for when a user-requested frame is being parsed
             if frame_flag == 1:
