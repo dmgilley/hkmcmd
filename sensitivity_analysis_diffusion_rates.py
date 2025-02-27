@@ -13,16 +13,16 @@ import pandas as pd
 from copy import deepcopy
 from typing import Union
 
-from hybrid_mdmc.data_file_parser import parse_data_file
+from Archive.data_file_parser import parse_data_file
 from hybrid_mdmc.diffusion import (
     Diffusion,
     calculate_molecular_voxel_assignments_by_frame_array,
 )
-from hybrid_mdmc.customargparse import HMDMC_ArgumentParser
+from Archive.customargparse import HMDMC_ArgumentParser
 from hybrid_mdmc.voxels import Voxels
-from hybrid_mdmc.classes import MoleculeList
-from hybrid_mdmc.mol_classes import AtomList
-from hybrid_mdmc.functions import gen_molecules
+from Archive.classes import MoleculeList
+from particle_interactions import AtomList
+from reaction import gen_molecules
 from hybrid_mdmc import utility
 
 

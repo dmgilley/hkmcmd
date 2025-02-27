@@ -5,7 +5,7 @@ import argparse, datetime
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-from functions import get_PSSrxns, scalerxns
+from reaction import get_PSSrxns, scalerxns
 
 
 def main():

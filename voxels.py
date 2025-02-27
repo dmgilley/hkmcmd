@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # Author
 #    Dylan Gilley
-#    dgilley@purdue.edu
+#    dylan.gilley@gmail.com
 
 
-# Imports
 import numpy as np
 from typing import Union
 from hybrid_mdmc import utility

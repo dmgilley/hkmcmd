@@ -1,0 +1,60 @@
+Date : 2025-02-24 09:46:25
+Directory : /Users/dgilley/bin/hybrid_mdmc
+Total : 32 files,  9715 codes, 743 comments, 1351 blanks, all 11809 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Python   |         30 |      9,265 |        743 |      1,302 |     11,310 |
+| JSON     |          1 |        390 |          0 |          1 |        391 |
+| Markdown |          1 |         60 |          0 |         48 |        108 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                        | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                           |         32 |      9,715 |        743 |      1,351 |     11,809 |
+| . (Files)                                                                   |         17 |      5,452 |        372 |        804 |      6,628 |
+| Archive                                                                     |         15 |      4,263 |        371 |        547 |      5,181 |
++-----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                    | language | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Users/dgilley/bin/hybrid_mdmc/Archive/calc_voxels.py                       | Python   |         59 |          7 |          8 |         74 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/calculate_MSD.py                     | Python   |        183 |         16 |         43 |        242 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/calculate_diffusion.py               | Python   |        148 |          9 |         16 |        173 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/calculate_running_diffusion_rates.py | Python   |         88 |         12 |         16 |        116 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/classes.py                           | Python   |        217 |         15 |         33 |        265 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/customargparse.py                    | Python   |        482 |         23 |         29 |        534 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/data_file_parser.py                  | Python   |        516 |         50 |         64 |        630 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/diffusion_archive06Dec2024.py        | Python   |        185 |         66 |         31 |        282 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/diffusion_convergence.py             | Python   |         80 |         13 |         13 |        106 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/gen_initial_hybridmdmc.py            | Python   |        158 |         25 |         35 |        218 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/interactive.ipynb                    | JSON     |        390 |          0 |          1 |        391 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/parsers copy.py                      | Python   |      1,348 |         69 |        148 |      1,565 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/rtd.py                               | Python   |        137 |         35 |         66 |        238 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/write_diffusion.py                   | Python   |        103 |         17 |         23 |        143 |
+| /Users/dgilley/bin/hybrid_mdmc/Archive/write_initial_hybridmdmc_bash.py     | Python   |        169 |         14 |         21 |        204 |
+| /Users/dgilley/bin/hybrid_mdmc/README.md                                    | Markdown |         60 |          0 |         48 |        108 |
+| /Users/dgilley/bin/hybrid_mdmc/concatenate_files.py                         | Python   |         36 |          8 |         17 |         61 |
+| /Users/dgilley/bin/hybrid_mdmc/diffusion.py                                 | Python   |        692 |         10 |         84 |        786 |
+| /Users/dgilley/bin/hybrid_mdmc/filehandlers_general.py                      | Python   |      1,092 |         80 |        132 |      1,304 |
+| /Users/dgilley/bin/hybrid_mdmc/filehandlers_lammps.py                       | Python   |        372 |         20 |         50 |        442 |
+| /Users/dgilley/bin/hybrid_mdmc/functions.py                                 | Python   |        540 |         62 |        101 |        703 |
+| /Users/dgilley/bin/hybrid_mdmc/gen_initial_hybridmdmc.py                    | Python   |        146 |         25 |         28 |        199 |
+| /Users/dgilley/bin/hybrid_mdmc/hybridKMCMD.py                               | Python   |        341 |         33 |         49 |        423 |
+| /Users/dgilley/bin/hybrid_mdmc/kmc.py                                       | Python   |         34 |          4 |          7 |         45 |
+| /Users/dgilley/bin/hybrid_mdmc/mean_displacement.py                         | Python   |        253 |          8 |         30 |        291 |
+| /Users/dgilley/bin/hybrid_mdmc/particle_interactions.py                     | Python   |        324 |          7 |         37 |        368 |
+| /Users/dgilley/bin/hybrid_mdmc/pure_kmc.py                                  | Python   |        193 |          1 |         30 |        224 |
+| /Users/dgilley/bin/hybrid_mdmc/sensitivity_analysis_diffusion_rates.py      | Python   |        376 |         26 |         43 |        445 |
+| /Users/dgilley/bin/hybrid_mdmc/test_voxels.py                               | Python   |        178 |          8 |         22 |        208 |
+| /Users/dgilley/bin/hybrid_mdmc/utility.py                                   | Python   |        143 |         18 |         36 |        197 |
+| /Users/dgilley/bin/hybrid_mdmc/voxels.py                                    | Python   |        478 |         14 |         58 |        550 |
+| /Users/dgilley/bin/hybrid_mdmc/write_hybridmdmc_bash.py                     | Python   |        194 |         48 |         32 |        274 |
+| Total                                                                       |          |      9,715 |        743 |      1,351 |     11,809 |
++-----------------------------------------------------------------------------+----------+------------+------------+------------+------------+

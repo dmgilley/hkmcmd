@@ -7,13 +7,11 @@
 
 import argparse, sys
 import numpy as np
-import pandas as pd
 from copy import deepcopy
 from hybrid_mdmc import utility
-from hybrid_mdmc.data_file_parser import parse_data_file
 from hybrid_mdmc.frame_generator import frame_generator
-from hybrid_mdmc.parsers import read_notebook
-from hybrid_mdmc.functions import gen_molecules
+from filehandlers_general import read_notebook, parse_data_file
+from reaction import gen_molecules
 
 
 def main(argv):

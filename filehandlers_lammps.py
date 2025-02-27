@@ -1,224 +1,156 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# Author
+#    Dylan Gilley
+#    dylan.gilley@gmail.com
+
 
 import numpy as np
 from textwrap import dedent
 
 
-# Simple function for testing whether a given string can be made into a float
-def isfloat_str(string):
-    try:
-        float(string)
-        return True
-    except ValueError:
-        return False
-
-
-# Function for writing a lammps data file, given a "data" dictionary
 def write_lammps_data(
-    file_name, atoms, bonds, angles, dihedrals, impropers, box, header={}, charge=True
+    file_name,
+    atoms_list,
+    bonds_list=None,
+    angles_list=None,
+    dihedrals_list=None,
+    impropers_list=None,
+    box=None,
+    num_atoms=None,
+    num_bonds=None,
+    num_angles=None,
+    num_dihedrals=None,
+    num_impropers=None,
+    num_atom_types=None,
+    num_bond_types=None,
+    num_angle_types=None,
+    num_dihedral_types=None,
+    num_improper_types=None,
+    masses=None,
+    charge=True,
+    wrap=True,
 ):
 
-    header_defaults = {
-        "atoms": atoms.ids.flatten().shape[0],
-        "atom_types": len(set(atoms.lammps_type)),
-        "bonds": bonds.ids.flatten().shape[0],
-        "bond_types": len(set(bonds.lammps_type)),
-        "angles": angles.ids.flatten().shape[0],
-        "angle_types": len(set(angles.lammps_type)),
-        "dihedrals": dihedrals.ids.flatten().shape[0],
-        "dihedral_types": len(set(dihedrals.lammps_type)),
-        "impropers": impropers.ids.flatten().shape[0],
-        "improper_types": len(set(impropers.lammps_type)),
-    }
-    if "masses" not in header.keys():
-        header_defaults["masses"] = sorted(
-            list(
-                set(
-                    [
-                        (atoms.lammps_type[idx], atoms.mass[idx])
-                        for idx in range(len(atoms.ids))
-                    ]
-                )
-            )
+    if bonds_list is None:
+        bonds_list = []
+    if angles_list is None:
+        angles_list = []
+    if dihedrals_list is None:
+        dihedrals_list = []
+    if impropers_list is None:
+        impropers_list = []
+    if box is None:
+        box = [
+            [
+                np.min([atom.x for atom in atoms_list]),
+                np.max([atom.x for atom in atoms_list]),
+            ],
+            [
+                np.min([atom.y for atom in atoms_list]),
+                np.max([atom.y for atom in atoms_list]),
+            ],
+            [
+                np.min([atom.z for atom in atoms_list]),
+                np.max([atom.z for atom in atoms_list]),
+            ],
+        ]
+    if num_atoms is None:
+        num_atoms = len(atoms_list)
+    if num_bonds is None:
+        num_bonds = len(bonds_list)
+    if num_angles is None:
+        num_angles = len(angles_list)
+    if num_dihedrals is None:
+        num_dihedrals = len(dihedrals_list)
+    if num_impropers is None:
+        num_impropers = len(impropers_list)
+    if num_atom_types is None:
+        num_atom_types = len(set([atom.lammps_type for atom in atoms_list]))
+    if num_bond_types is None:
+        num_bond_types = len(set([bond.kind for bond in bonds_list]))
+    if num_angle_types is None:
+        num_angle_types = len(set([angle.kind for angle in angles_list]))
+    if num_dihedral_types is None:
+        num_dihedral_types = len(set([dihedral.kind for dihedral in dihedrals_list]))
+    if num_improper_types is None:
+        num_improper_types = len(set([improper.kind for improper in impropers_list]))
+    if masses is None:
+        masses = sorted(
+            list(set([(atom.lammps_type, atom.mass) for atom in atoms_list]))
         )
 
-    for keyword in header_defaults.keys():
-        if keyword not in header:
-            header[keyword] = header_defaults[keyword]
+    if wrap is True:
+        for atom in atoms_list:
+            atom.wrap(box)
 
     with open(file_name, "w") as f:
 
-        f.write("LAMMPS data file.\n\n")
+        f.write(
+            f"""LAMMPS data file
+                
+{num_atoms:<5d} atoms
+{num_atom_types:<5d} atom types
+{num_bonds:<5d} bonds
+{num_bond_types:<5d} bond types
+{num_angles:<5d} angles
+{num_angle_types:<5d} angle types
+{num_dihedrals:<5d} dihedrals
+{num_dihedral_types:<5d} dihedral types
+{num_impropers:<5d} impropers
+{num_improper_types:<5d} improper types
 
-        f.write("{:<5d} {}\n".format(header["atoms"], "atoms"))
-        f.write("{:<5d} {}\n".format(header["atom_types"], "atom types"))
-        f.write("{:<5d} {}\n".format(header["bonds"], "bonds"))
-        f.write("{:<5d} {}\n".format(header["bond_types"], "bond types"))
-        f.write("{:<5d} {}\n".format(header["angles"], "angles"))
-        f.write("{:<5d} {}\n".format(header["angle_types"], "angle types"))
-        f.write("{:<5d} {}\n".format(header["dihedrals"], "dihedrals"))
-        f.write("{:<5d} {}\n".format(header["dihedral_types"], "dihedral types"))
-        f.write("{:<5d} {}\n".format(header["impropers"], "impropers"))
-        f.write("{:<5d} {}\n\n".format(header["improper_types"], "improper types"))
+{box[0][0]:<12.8f} {box[0][1]:<12.8f} xlo xhi
+{box[1][0]:<12.8f} {box[1][1]:<12.8f} ylo yhi
+{box[2][0]:<12.8f} {box[2][1]:<12.8f} zlo zhi
 
-        f.write(
-            "{:<12.8f} {:<12.8f} {} {}\n".format(box[0][0], box[0][1], "xlo", "xhi")
-        )
-        f.write(
-            "{:<12.8f} {:<12.8f} {} {}\n".format(box[1][0], box[1][1], "ylo", "yhi")
-        )
-        f.write(
-            "{:<12.8f} {:<12.8f} {} {}\n\n".format(box[2][0], box[2][1], "zlo", "zhi")
+"""
         )
 
         f.write("Masses\n\n")
-        for mass in header["masses"]:
-            f.write("{:<5d} {:<8.4f}\n".format(mass[0], mass[1]))
+        for mass in masses:
+            f.write(f"{mass[0]:<5d} {mass[1]:<8.4f}\n")
 
         f.write("\nAtoms\n\n")
         if charge:
-            for idx, atom_id in enumerate(atoms.ids):
+            for atom in atoms_list:
                 f.write(
-                    "{:<5d} {:<5d} {:<5d} {:>14.8f} {:>14.8f} {:>14.8f} {:>14.8f}\n".format(
-                        atom_id,
-                        atoms.mol_id[idx],
-                        atoms.lammps_type[idx],
-                        atoms.charge[idx],
-                        atoms.x[idx],
-                        atoms.y[idx],
-                        atoms.z[idx],
-                    )
+                    f"{atom.ID:<5d} {atom.molecule_ID:<5d} {atom.lammps_type:<5d} {atom.charge:>14.8f} {atom.x:>14.8f} {atom.y:>14.8f} {atom.z:>14.8f}\n"
                 )
         if not charge:
-            for idx, atom_id in enumerate(atoms.ids):
+            for atom in atoms_list:
                 f.write(
-                    "{:<5d} {:<5d} {:<5d} {:>14.8f} {:>14.8f} {:>14.8f}\n".format(
-                        atom_id,
-                        atoms.mol_id[idx],
-                        atoms.lammps_type[idx],
-                        atoms.x[idx],
-                        atoms.y[idx],
-                        atoms.z[idx],
-                    )
+                    f"{atom.ID:<5d} {atom.molecule_ID:<5d} {atom.lammps_type:<5d} {atom.x:>14.8f} {atom.y:>14.8f} {atom.z:>14.8f}\n"
                 )
 
-        if bonds.ids.flatten().shape[0] > 0:
+        if len(bonds_list) > 0:
             f.write("\nBonds\n\n")
-            for idx, bond_id in enumerate(bonds.ids):
+            for intramode in bonds_list:
                 f.write(
-                    "{:<4d} {:<4d} {:<4d} {:<4d}\n".format(
-                        bond_id,
-                        bonds.lammps_type[idx],
-                        bonds.atom_ids[idx][0],
-                        bonds.atom_ids[idx][1],
-                    )
+                    f"{intramode.ID:<4d} {intramode.kind:<4d} {intramode.atom_IDs[0]:<4d} {intramode.atom_IDs[1]:<4d}\n"
                 )
 
-        if angles.ids.flatten().shape[0] > 0:
+        if len(angles_list) > 0:
             f.write("\nAngles\n\n")
-            for idx, angle_id in enumerate(angles.ids):
+            for intramode in angles_list:
                 f.write(
-                    "{:<4d} {:<4d} {:<4d} {:<4d} {:<4d}\n".format(
-                        angle_id,
-                        angles.lammps_type[idx],
-                        angles.atom_ids[idx][0],
-                        angles.atom_ids[idx][1],
-                        angles.atom_ids[idx][2],
-                    )
+                    f"{intramode.ID:<4d} {intramode.kind:<4d} {intramode.atom_IDs[0]:<4d} {intramode.atom_IDs[1]:<4d} {intramode.atom_IDs[2]:<4d}\n"
                 )
 
-        if dihedrals.ids.flatten().shape[0] > 0:
+        if len(dihedrals_list) > 0:
             f.write("\nDihedrals\n\n")
-            for idx, dihedral_id in enumerate(dihedrals.ids):
+            for intramode in dihedrals_list:
                 f.write(
-                    "{:<4d} {:<4d} {:<4d} {:<4d} {:<4d} {:<4d}\n".format(
-                        dihedral_id,
-                        dihedrals.lammps_type[idx],
-                        dihedrals.atom_ids[idx][0],
-                        dihedrals.atom_ids[idx][1],
-                        dihedrals.atom_ids[idx][2],
-                        dihedrals.atom_ids[idx][3],
-                    )
+                    f"{intramode.ID:<4d} {intramode.kind:<4d} {intramode.atom_IDs[0]:<4d} {intramode.atom_IDs[1]:<4d} {intramode.atom_IDs[2]:<4d} {intramode.atom_IDs[3]:<4d}\n"
                 )
 
-        if impropers.ids.flatten().shape[0] > 0:
+        if len(impropers_list) > 0:
             f.write("\nImpropers\n\n")
-            for idx, improper_id in enumerate(impropers.ids):
+            for intramode in impropers_list:
                 f.write(
-                    "{:<4d} {:<4d} {:<4d} {:<4d} {:<4d} {:<4d}\n".format(
-                        improper_id,
-                        impropers.lammps_type[idx],
-                        impropers.atom_ids[idx][0],
-                        impropers.atom_ids[idx][1],
-                        impropers.atom_ids[idx][2],
-                        impropers.atom_ids[idx][3],
-                    )
+                    f"{intramode.ID:<4d} {intramode.kind:<4d} {intramode.atom_IDs[0]:<4d} {intramode.atom_IDs[1]:<4d} {intramode.atom_IDs[2]:<4d} {intramode.atom_IDs[3]:<4d}\n"
                 )
 
     return
-
-
-def parse_lammps_out(fname):
-
-    data = {}
-    flag = False
-    with open(fname, "r") as f:
-        for line in f:
-            fields = line.split()
-            if fields == []:
-                continue
-            if fields[0] == "Step":
-                flag = True
-                keywords = fields[1:]
-                continue
-            if len(fields) > 7:
-                if fields[0] == "Loop" and fields[1] == "time":
-                    flag = False
-                    continue
-            if flag:
-                data[int(fields[0])] = [float(i) for i in fields[1:]]
-
-    return keywords, data
-
-
-def parse_data_header_and_masses(fname):
-
-    header = {"masses": {}}
-    flag = None
-
-    int_types = ["atom", "bond", "angle", "dihedral", "improper"]
-
-    with open(fname, "r") as f:
-        for line in f:
-
-            fields = line.split()
-            if fields == []:
-                continue
-            if fields[0] == "#":
-                continue
-            if fields[0] == "Masses":
-                flag = "Masses"
-                continue
-
-            if not flag and len(fields) == 3:
-                if fields[1] in int_types and fields[2] == "types":
-                    header[fields[1] + "_types"] = int(fields[0])
-                    continue
-
-            if flag == "Masses":
-                try:
-                    header["masses"][int(fields[0])] = float(fields[1])
-                except:
-                    header["masses"] = [
-                        (k, header["masses"][k])
-                        for k in sorted(list(header["masses"].keys()))
-                    ]
-                    return header
-
-    header["masses"] = [
-        (k, header["masses"][k]) for k in sorted(list(header["masses"].keys()))
-    ]
-    return header
 
 
 class LammpsInitHandler:
