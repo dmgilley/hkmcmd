@@ -1,0 +1,671 @@
+{
+    "hkmcmd": null,
+    "scaling_reaction": null,
+    "scaling_diffusion": null,
+    "lammps": {
+        "units": "real",
+        "atom_style": "full",
+        "pair_style": "lj/cut 10.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "harmonic",
+        "improper_style": "harmonic",
+        "starting_methanol": 4,
+        "starting_oxygen": 4,
+        "starting_water": 1,
+        "starting_carbon_dioxide": 1,
+        "charged_atoms": true
+    },
+    "species": [
+        {
+            "ID": 1,
+            "kind": "methanol",
+            "cog": [
+                [
+                    -2.0,
+                    -2.0000000000000004,
+                    9.25185853854297e-18
+                ]
+            ],
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": "C",
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": "C",
+                    "mass": 12.011,
+                    "molecule_ID": 1,
+                    "molecule_kind": "methanol",
+                    "x": -1.7166666666666668,
+                    "y": -1.8333333333333335,
+                    "z": 0.08333333333333333,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": -0.0491
+                },
+                {
+                    "ID": 2,
+                    "kind": "O",
+                    "lammps_type": 2,
+                    "taffi_type": null,
+                    "element": "O",
+                    "mass": 15.999,
+                    "molecule_ID": 1,
+                    "molecule_kind": "methanol",
+                    "x": -3.216666666666667,
+                    "y": -1.8333333333333335,
+                    "z": 0.08333333333333333,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": -0.5873
+                },
+                {
+                    "ID": 3,
+                    "kind": "H",
+                    "lammps_type": 3,
+                    "taffi_type": null,
+                    "element": "H",
+                    "mass": 1.008,
+                    "molecule_ID": 1,
+                    "molecule_kind": "methanol",
+                    "x": -1.2166666666666668,
+                    "y": -1.8333333333333335,
+                    "z": -0.9166666666666666,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0767
+                },
+                {
+                    "ID": 4,
+                    "kind": "H",
+                    "lammps_type": 3,
+                    "taffi_type": null,
+                    "element": "H",
+                    "mass": 1.008,
+                    "molecule_ID": 1,
+                    "molecule_kind": "methanol",
+                    "x": -1.2166666666666668,
+                    "y": -2.8333333333333335,
+                    "z": 0.5833333333333334,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0767
+                },
+                {
+                    "ID": 5,
+                    "kind": "H",
+                    "lammps_type": 3,
+                    "taffi_type": null,
+                    "element": "H",
+                    "mass": 1.008,
+                    "molecule_ID": 1,
+                    "molecule_kind": "methanol",
+                    "x": -1.2166666666666668,
+                    "y": -0.8333333333333335,
+                    "z": 0.5833333333333334,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0767
+                },
+                {
+                    "ID": 6,
+                    "kind": "H",
+                    "lammps_type": 4,
+                    "taffi_type": null,
+                    "element": "H",
+                    "mass": 1.008,
+                    "molecule_ID": 1,
+                    "molecule_kind": "methanol",
+                    "x": -3.416666666666667,
+                    "y": -2.8333333333333335,
+                    "z": -0.4166666666666667,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.4602
+                }
+            ],
+            "bonds": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "atom_IDs": [
+                        1,
+                        2
+                    ]
+                },
+                {
+                    "ID": 2,
+                    "kind": 2,
+                    "atom_IDs": [
+                        1,
+                        3
+                    ]
+                },
+                {
+                    "ID": 3,
+                    "kind": 2,
+                    "atom_IDs": [
+                        1,
+                        4
+                    ]
+                },
+                {
+                    "ID": 4,
+                    "kind": 2,
+                    "atom_IDs": [
+                        1,
+                        5
+                    ]
+                },
+                {
+                    "ID": 5,
+                    "kind": 3,
+                    "atom_IDs": [
+                        2,
+                        6
+                    ]
+                }
+            ],
+            "angles": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "atom_IDs": [
+                        2,
+                        1,
+                        3
+                    ]
+                },
+                {
+                    "ID": 2,
+                    "kind": 1,
+                    "atom_IDs": [
+                        2,
+                        1,
+                        4
+                    ]
+                },
+                {
+                    "ID": 3,
+                    "kind": 1,
+                    "atom_IDs": [
+                        2,
+                        1,
+                        5
+                    ]
+                },
+                {
+                    "ID": 4,
+                    "kind": 2,
+                    "atom_IDs": [
+                        1,
+                        2,
+                        6
+                    ]
+                },
+                {
+                    "ID": 5,
+                    "kind": 3,
+                    "atom_IDs": [
+                        3,
+                        1,
+                        4
+                    ]
+                },
+                {
+                    "ID": 6,
+                    "kind": 3,
+                    "atom_IDs": [
+                        3,
+                        1,
+                        5
+                    ]
+                },
+                {
+                    "ID": 7,
+                    "kind": 3,
+                    "atom_IDs": [
+                        4,
+                        1,
+                        5
+                    ]
+                }
+            ],
+            "dihedrals": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "atom_IDs": [
+                        3,
+                        1,
+                        2,
+                        6
+                    ]
+                },
+                {
+                    "ID": 2,
+                    "kind": 1,
+                    "atom_IDs": [
+                        4,
+                        1,
+                        2,
+                        6
+                    ]
+                },
+                {
+                    "ID": 3,
+                    "kind": 1,
+                    "atom_IDs": [
+                        5,
+                        1,
+                        2,
+                        6
+                    ]
+                }
+            ],
+            "impropers": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "atom_IDs": [
+                        1,
+                        2,
+                        3,
+                        4
+                    ]
+                },
+                {
+                    "ID": 2,
+                    "kind": 1,
+                    "atom_IDs": [
+                        1,
+                        2,
+                        3,
+                        5
+                    ]
+                },
+                {
+                    "ID": 3,
+                    "kind": 1,
+                    "atom_IDs": [
+                        1,
+                        2,
+                        4,
+                        5
+                    ]
+                }
+            ]
+        },
+        {
+            "ID": 1,
+            "kind": "oxygen",
+            "cog": [
+                [
+                    -2.0,
+                    2.0,
+                    0.0
+                ]
+            ],
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": "O",
+                    "lammps_type": 5,
+                    "taffi_type": null,
+                    "element": "O",
+                    "mass": 15.999,
+                    "molecule_ID": 1,
+                    "molecule_kind": "oxygen",
+                    "x": -3.0,
+                    "y": 2.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                },
+                {
+                    "ID": 2,
+                    "kind": "O",
+                    "lammps_type": 5,
+                    "taffi_type": null,
+                    "element": "O",
+                    "mass": 15.999,
+                    "molecule_ID": 1,
+                    "molecule_kind": "oxygen",
+                    "x": -1.0,
+                    "y": 2.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                }
+            ],
+            "bonds": [
+                {
+                    "ID": 1,
+                    "kind": 4,
+                    "atom_IDs": [
+                        1,
+                        2
+                    ]
+                }
+            ]
+        },
+        {
+            "ID": 1,
+            "kind": "water",
+            "cog": [
+                [
+                    2.0,
+                    1.9999999999999998,
+                    0.0
+                ]
+            ],
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": "O",
+                    "lammps_type": 6,
+                    "taffi_type": null,
+                    "element": "O",
+                    "mass": 15.999,
+                    "molecule_ID": 1,
+                    "molecule_kind": "water",
+                    "x": 2.0,
+                    "y": 1.8333333333333333,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": -0.834
+                },
+                {
+                    "ID": 2,
+                    "kind": "H",
+                    "lammps_type": 7,
+                    "taffi_type": null,
+                    "element": "H",
+                    "mass": 1.008,
+                    "molecule_ID": 1,
+                    "molecule_kind": "water",
+                    "x": 1.0,
+                    "y": 2.083333333333333,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.417
+                },
+                {
+                    "ID": 3,
+                    "kind": "H",
+                    "lammps_type": 7,
+                    "taffi_type": null,
+                    "element": "H",
+                    "mass": 1.008,
+                    "molecule_ID": 1,
+                    "molecule_kind": "water",
+                    "x": 3.0,
+                    "y": 2.083333333333333,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.417
+                }
+            ],
+            "bonds": [
+                {
+                    "ID": 1,
+                    "kind": 5,
+                    "atom_IDs": [
+                        1,
+                        2
+                    ]
+                },
+                {
+                    "ID": 1,
+                    "kind": 5,
+                    "atom_IDs": [
+                        1,
+                        3
+                    ]
+                }
+            ],
+            "angles": [
+                {
+                    "ID": 1,
+                    "kind": 4,
+                    "atom_IDs": [
+                        2,
+                        1,
+                        3
+                    ]
+                }
+            ]
+        },
+        {
+            "ID": 1,
+            "kind": "carbon_dioxide",
+            "cog": [
+                [
+                    2.0,
+                    -2.0,
+                    0.0
+                ]
+            ],
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": "C",
+                    "lammps_type": 8,
+                    "taffi_type": null,
+                    "element": "C",
+                    "mass": 12.011,
+                    "molecule_ID": 1,
+                    "molecule_kind": "carbon_dioxide",
+                    "x": 2.0,
+                    "y": -2.1666666666666665,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.652
+                },
+                {
+                    "ID": 2,
+                    "kind": 9,
+                    "lammps_type": 9,
+                    "taffi_type": null,
+                    "element": "O",
+                    "mass": 15.999,
+                    "molecule_ID": 1,
+                    "molecule_kind": "carbon_dioxide",
+                    "x": 1.0,
+                    "y": -1.9166666666666665,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": -0.326
+                },
+                {
+                    "ID": 3,
+                    "kind": 9,
+                    "lammps_type": 9,
+                    "taffi_type": null,
+                    "element": "O",
+                    "mass": 15.999,
+                    "molecule_ID": 1,
+                    "molecule_kind": "carbon_dioxide",
+                    "x": 3.0,
+                    "y": -1.9166666666666665,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": -0.326
+                }
+            ],
+            "bonds": [
+                {
+                    "ID": 1,
+                    "kind": 6,
+                    "atom_IDs": [
+                        1,
+                        2
+                    ]
+                },
+                {
+                    "ID": 1,
+                    "kind": 6,
+                    "atom_IDs": [
+                        1,
+                        3
+                    ]
+                }
+            ],
+            "angles": [
+                {
+                    "ID": 1,
+                    "kind": 5,
+                    "atom_IDs": [
+                        2,
+                        1,
+                        3
+                    ]
+                }
+            ]
+        }
+    ],
+    "reactions": [
+        {
+            "ID": null,
+            "kind": null,
+            "reactant_molecules": null,
+            "product_molecules": null,
+            "Ea": null,
+            "Ea_units": "kcal/mol",
+            "A": null,
+            "A_units": "1/s",
+            "b": null,
+            "event_rate": null,
+            "event_rate_units": "1/s",
+            "translation": 0.5,
+            "rawrate": null
+        }
+    ],
+    "MD_initial": null,
+    "MD_cycling": null
+}

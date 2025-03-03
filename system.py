@@ -10,7 +10,7 @@ import pandas as pd
 from copy import deepcopy
 from typing import Union
 from hybrid_mdmc import utility
-from hybrid_mdmc.particle_interactions import Molecule, Reaction
+from hybrid_mdmc.interactions import Molecule, Reaction
 
 
 class SystemState:
@@ -81,6 +81,22 @@ class SystemState:
             self.reactive_steps = np.array(self.reactive_steps).flatten()
         if type(self.times) == list:
             self.times = np.array(self.times).flatten()
+        if type(self.molecule_IDs) == list:
+            self.molecule_IDs = np.array(self.molecule_IDs)
+        if self.molecule_IDs is not None and len(self.molecule_IDs.shape) == 1:
+            self.molecule_IDs = np.reshape(self.molecule_IDs, (1,-1))
+        if type(self.molecule_kinds) == list:
+            self.molecule_kinds = np.array(self.molecule_kinds)
+        if self.molecule_kinds is not None and len(self.molecule_kinds.shape) == 1:
+            self.molecule_kinds = np.reshape(self.molecule_kinds, (1,-1))
+        if type(self.reaction_selections) == list:
+            self.reaction_selections = np.array(self.reaction_selections)
+        if self.reaction_selections is not None and len(self.reaction_selections.shape) == 1:
+            self.reaction_selections = np.reshape(self.reaction_selections, (1,-1))
+        if type(self.reaction_scalings) == list:
+            self.reaction_scalings = np.array(self.reaction_scalings)
+        if self.reaction_scalings is not None and len(self.reaction_scalings.shape) == 1:
+            self.reaction_scalings = np.reshape(self.reaction_scalings, (1,-1))
         return
 
     def check_consistency(self):
@@ -129,7 +145,7 @@ class SystemState:
         steps = steps[0]
 
         # check final step molecule IDs and kinds match
-        if self.molecule_IDs is not None:
+        if self.molecule_IDs is not None and self.molecule_kinds is not None:
             unique_IDs = np.unique(self.molecule_IDs[-1,:])
             ID_indices = [np.argwhere(self.molecule_IDs[-1,:] == ID)[0] for ID in unique_IDs]
             unique_kinds = np.unique(self.molecule_kinds[-1,:])
@@ -151,8 +167,8 @@ class SystemState:
         IDs_molecules = list(
             zip(
                 deepcopy(self.atom_IDs),
-                deepcopy(self.molecule_IDs[-1, :]),
-                deepcopy(self.molecule_kinds[-1, :]),
+                deepcopy((self.molecule_IDs[-1, :])),
+                deepcopy((self.molecule_kinds[-1, :])),
             )
         )
         IDs_molecules.sort(key=lambda x: x[0])
@@ -160,27 +176,27 @@ class SystemState:
         atoms_list.sort(key=lambda x: x.ID)
 
         # check atom IDs
-        if not np.all(list(zip(*IDs_molecules))[0] == [_.ID for _ in atoms_list]):
+        if not np.all(list(list(zip(*IDs_molecules))[0]) == [_.ID for _ in atoms_list]):
             raise ValueError("SystemState.atom_IDs does not match atoms_list")
 
         # check molecule IDs
         if None not in [_.molecule_ID for _ in atoms_list]:
             if not np.all(
-                list(zip(*IDs_molecules))[1] == [_.molecule_ID for _ in atoms_list]
+                list(list(zip(*IDs_molecules))[1]) == [_.molecule_ID for _ in atoms_list]
             ):
                 raise ValueError("SystemState.molecule_IDs does not match atoms_list")
 
         # check molecule kinds
-        if None not in [_.kind for _ in atoms_list]:
-            if not np.all(
-                list(zip(*IDs_molecules))[2] == [_.molecule_kind for _ in atoms_list]
-            ):
+        if None not in [_.molecule_kind for _ in atoms_list]:
+            if not np.all(list(list(zip(*IDs_molecules))[2]) == [_.molecule_kind for _ in atoms_list]):
                 raise ValueError("SystemState.molecule_kinds does not match atoms_list")
 
-        return
+        return True
 
     def get_molecule_kind(self, molecule_ID):
-        return self.molecule_kinds[-1,np.argwhere(self.molecule_IDs[-1] == molecule_ID)[0]][0]
+        if molecule_ID not in self.molecule_IDs[-1,:]:
+            raise ValueError(f"molecule_ID {molecule_ID} not found in SystemState.molecule_IDs")
+        return self.molecule_kinds[-1,np.argwhere(self.molecule_IDs[-1,:] == molecule_ID)[0]][0]
 
     def assemble_reaction_scaling_df(self):
         return pd.DataFrame(
@@ -217,7 +233,7 @@ class SystemState:
         self.molecule_IDs = np.append(self.molecule_IDs, [np.zeros_like(self.atom_IDs)], axis=0)
         self.molecule_kinds = np.append(self.molecule_kinds, [np.zeros_like(self.atom_IDs)], axis=0)
         for molecule in molecules_list:
-            for atom in molecule.atoms_list:
+            for atom in molecule.atoms:
                 self.molecule_IDs[-1,_map[atom.ID]] = molecule.ID
                 self.molecule_kinds[-1,_map[atom.ID]] = molecule.kind
         return
@@ -227,7 +243,7 @@ class SystemState:
         self.reaction_scalings = np.append(self.reaction_scalings, [np.zeros_like(self.reaction_kinds)], axis=0)
         for idx,reaction_kind in enumerate(self.reaction_kinds):
             self.reaction_selections[-1,idx] = reaction_selections.count(reaction_kind)
-            self.reaction_scalings[-1,idx] = reaction_scaling_df[reaction_kind][-1]
+            self.reaction_scalings[-1,idx] = reaction_scaling_df[reaction_kind].to_numpy()[-1]
         return
 
     def update_steps(self, diffusion_cycle, dt):
@@ -302,6 +318,18 @@ class SystemData:
         if self.filename_json is None:
             self.filename_json = self.name + ".json"
         return
+
+    @property
+    def atomic_masses(self):
+        atoms = utility.flatten_nested_list(
+            [molecule.atoms for molecule in self.species]
+        )
+        masses = sorted(
+            set([(atom.lammps_type, atom.mass) for atom in atoms]), key=lambda x: x[0]
+        )
+        if None in [_[1] for _ in masses]:
+            raise ValueError("Masses must be defined for all atoms.")
+        return masses
 
     def read_json(self):
         if not os.path.exists(self.filename_json):
@@ -497,15 +525,3 @@ class SystemData:
         attr = getattr(self, key)
         dict_.update({k: attr[k] for k in keys})
         return dict_
-
-    @property
-    def atomic_masses(self):
-        atoms = utility.flatten_nested_list(
-            [molecule.atoms for molecule in self.species]
-        )
-        masses = sorted(
-            set([(atom.lammps_type, atom.mass) for atom in atoms]), key=lambda x: x[0]
-        )
-        if None in [_[1] for _ in masses]:
-            raise ValueError("Masses must be defined for all atoms.")
-        return masses

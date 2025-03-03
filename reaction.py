@@ -7,7 +7,7 @@
 import numpy as np
 from copy import deepcopy
 from sklearn import linear_model
-from hybrid_mdmc.particle_interactions import Reaction
+from hybrid_mdmc.interactions import Reaction
 
 
 def get_reactive_events_list(
@@ -35,7 +35,7 @@ def get_reactive_events_list(
             reactive_molecule_idxs_i = [
                 idx
                 for idx, molecule in enumerate(molecules_list)
-                if molecule.kind == reaction_template.reactant_molecule[0].kind
+                if molecule.kind == reaction_template.reactant_molecules[0].kind
             ]
             for molecule_idx_i in reactive_molecule_idxs_i:
                 event_dict[event_ID] = Reaction(
@@ -52,16 +52,17 @@ def get_reactive_events_list(
             reactive_molecule_idxs_i = [
                 idx
                 for idx, molecule in enumerate(molecules_list)
-                if molecule.kind == reaction_template.reactant_molecule[0].kind
+                if molecule.kind == reaction_template.reactant_molecules[0].kind
             ]
             reactive_molecule_idxs_j = [
                 idx
                 for idx, molecule in enumerate(molecules_list)
-                if molecule.kind == reaction_template.reactant_molecule[1].kind
+                if molecule.kind == reaction_template.reactant_molecules[1].kind
             ]
             for molecule_idx_i in reactive_molecule_idxs_i:
                 inner_loop_list = deepcopy(reactive_molecule_idxs_j)
-                inner_loop_list.remove(molecule_idx_i)
+                if molecule_idx_i in inner_loop_list:
+                    inner_loop_list.remove(molecule_idx_i)
                 if (
                     reaction_template.reactant_molecules[0].kind
                     == reaction_template.reactant_molecules[1].kind
@@ -73,12 +74,20 @@ def get_reactive_events_list(
                         if idx_j > molecule_idx_i
                     ]
                 for molecule_idx_j in inner_loop_list:
-                    drate = diffusion_rates_dict_matrix[
-                        reaction_template.reactant_molecules[0].kind
-                    ][
-                        molecules_list[molecule_idx_i].voxel_idxs_tuple[0],
-                        molecules_list[molecule_idx_j].voxel_idxs_tuple[0],
-                    ]
+                    drate = np.max([
+                        diffusion_rates_dict_matrix[
+                            reaction_template.reactant_molecules[0].kind
+                        ][
+                            molecules_list[molecule_idx_i].voxel_idx,
+                            molecules_list[molecule_idx_j].voxel_idx,
+                        ],
+                        diffusion_rates_dict_matrix[
+                            reaction_template.reactant_molecules[0].kind
+                        ][
+                            molecules_list[molecule_idx_j].voxel_idx,
+                            molecules_list[molecule_idx_i].voxel_idx,
+                        ],]
+                    )
                     if drate < minimum_diffusion_rate:
                         continue
                     dtime = np.inf

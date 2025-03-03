@@ -4,9 +4,7 @@
 #    dylan.gilley@gmail.com
 
 
-import datetime, os
 import numpy as np
-import pandas as pd
 import scipy.spatial.distance as sds
 from copy import deepcopy
 from itertools import chain

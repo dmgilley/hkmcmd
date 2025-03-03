@@ -10,7 +10,7 @@ import numpy as np
 from copy import deepcopy
 from hybrid_mdmc import utility
 from hybrid_mdmc.frame_generator import frame_generator
-from filehandlers_general import read_notebook, parse_data_file
+from filehandlers import read_notebook, parse_data_file
 from reaction import gen_molecules
 
 

@@ -1,0 +1,95 @@
+# LAMMPS init file
+
+#===========================================================
+# Initialize System
+#===========================================================
+
+# System definition
+units lj
+dimension 3
+newton on
+boundary p p p
+atom_style full
+neigh_modify every 5 delay 0 check no one 10000
+
+# Force-field definition
+special_bonds   lj 0.0 0.0 0.0 coul 0.0 0.0 0.0
+pair_style      lj/cut 3.0
+pair_modify     shift yes mix sixthpower
+bond_style      harmonic
+angle_style     harmonic
+dihedral_style  opls
+improper_style  cvff
+
+# Data, settings, and log files setup
+read_data fiction-1.in.data
+include fiction-1.in.settings
+log fiction-1.lammps.log
+thermo_style custom temp press ke pe ebond evdwl
+thermo_modify format float %14.6f
+thermo 100
+
+# Thermodynamic averages file setup
+# "Nevery Nrepeat Nfreq": On every "Nfreq" steps, take the averages by using "Nrepeat" previous steps, counted every "Nevery"
+variable calc_temp equal temp
+variable calc_press equal press
+variable calc_ke equal ke
+variable calc_pe equal pe
+variable calc_ebond equal ebond
+variable calc_evdwl equal evdwl
+fix averages all ave/time 5 10 50 v_calc_temp v_calc_press v_calc_ke v_calc_pe v_calc_ebond v_calc_evdwl file fiction-1.thermo.avg format %20.10g
+
+#===========================================================
+# relax (nve/limit)
+#===========================================================
+
+timestep 0.00025
+velocity all create 1.267 886628
+run_style verlet
+dump relax all custom 100 fiction-1.relax.lammpstrj id mol type xu yu zu vx vy vz
+dump_modify relax sort id format float %20.10g
+fix relax all nve/limit 0.03
+run 500
+unfix relax
+undump relax
+
+#===========================================================
+# equil (nvt)
+#===========================================================
+
+timestep 0.001
+velocity all create 1.267 670778
+run_style verlet
+dump equil all custom 100 fiction-1.equil.lammpstrj id mol type xu yu zu vx vy vz
+dump_modify equil sort id format float %20.10g
+fix equil all nvt temp 1.267 1.267 0.425
+run 3000
+unfix equil
+undump equil
+
+group As type 1
+fix viscosity As viscous 10.0
+
+#===========================================================
+# diffusion (nvt)
+#===========================================================
+
+timestep 0.001
+velocity all create 1.267 650673
+run_style verlet
+dump diffusion all custom 100 fiction-1.diffusion.lammpstrj id mol type xu yu zu vx vy vz
+dump_modify diffusion sort id format float %20.10g
+fix diffusion all nvt temp 1.267 1.267 0.425
+run 100000
+unfix diffusion
+undump diffusion
+
+unfix viscosity
+
+#===========================================================
+# Clean and exit
+#===========================================================
+
+unfix averages
+write_data fiction-1.end.data
+write_restart fiction-1.end.restart

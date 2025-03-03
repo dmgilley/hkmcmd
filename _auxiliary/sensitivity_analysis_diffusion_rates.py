@@ -21,7 +21,7 @@ from hybrid_mdmc.diffusion import (
 from Archive.customargparse import HMDMC_ArgumentParser
 from hybrid_mdmc.voxels import Voxels
 from Archive.classes import MoleculeList
-from particle_interactions import AtomList
+from interactions import AtomList
 from reaction import gen_molecules
 from hybrid_mdmc import utility
 

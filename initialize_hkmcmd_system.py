@@ -7,10 +7,9 @@
 import sys
 import numpy as np
 from copy import deepcopy
-from hybrid_mdmc.particle_interactions import update_molecules_list_IDs
-from hybrid_mdmc.filehandlers_lammps import write_lammps_data, LammpsInitHandler
-from hybrid_mdmc.filehandlers_general import hkmcmd_ArgumentParser
-from hybrid_mdmc.simulation_system import SystemData, SystemState
+from hybrid_mdmc.interactions import update_molecules_list_IDs, get_interactions_lists_from_molcules_list
+from hybrid_mdmc.filehandlers import hkmcmd_ArgumentParser, write_lammps_data, LammpsInitHandler
+from hybrid_mdmc.system import SystemData, SystemState
 from hybrid_mdmc import utility
 
 
@@ -19,7 +18,6 @@ def main(argv):
     # Parse the command line arguments
     parser = hkmcmd_ArgumentParser()
     args = parser.parse_args()
-
 
     # Read and clean the system data file
     system_data = SystemData(args.system, args.prefix)
@@ -70,23 +68,19 @@ def main(argv):
             molecule.rotate(np.random.uniform(0, 2 * np.pi), axis)
 
     # Assemble the system
-    atoms_list = utility.flatten_nested_list([molecule.atoms for molecule in molecules_list])
-    bonds_list = utility.flatten_nested_list([molecule.bonds for molecule in molecules_list if molecule.bonds is not None])
-    angles_list = utility.flatten_nested_list([molecule.angles for molecule in molecules_list if molecule.angles is not None])
-    dihedrals_list = utility.flatten_nested_list([molecule.dihedrals for molecule in molecules_list if molecule.dihedrals is not None])
-    impropers_list = utility.flatten_nested_list([molecule.impropers for molecule in molecules_list if molecule.impropers is not None])
+    atoms_list, bonds_list, angles_list, dihedrals_list, impropers_list = get_interactions_lists_from_molcules_list(molecules_list)
     box = [[-box_length / 2, box_length / 2]]*3
 
     # Initialize the system state file
     system_state = SystemState(
         filename=args.filename_system_state,
-        atom_IDs=[atom.ID for atom in atoms_list.sort(key=lambda atom: atom.ID)],
+        atom_IDs=[atom.ID for atom in sorted(atoms_list, key=lambda atom: atom.ID)],
         reaction_kinds=sorted([reaction.kind for reaction in system_data.reactions]),
         diffusion_steps = [0],
         reactive_steps = [0],
         times = [0.0],
-        molecule_IDs = [atom.molecule_ID for atom in atoms_list.sort(key=lambda atom: atom.ID)],
-        molecule_kinds = [atom.molecule_kind for atom in atoms_list.sort(key=lambda atom: atom.ID)],
+        molecule_IDs = [atom.molecule_ID for atom in sorted(atoms_list,key=lambda atom: atom.ID)],
+        molecule_kinds = [atom.molecule_kind for atom in sorted(atoms_list, key=lambda atom: atom.ID)],
         reaction_selections = [0 for _ in system_data.reactions],
         reaction_scalings = [1.0 for _ in system_data.reactions],
     )

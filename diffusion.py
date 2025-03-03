@@ -14,18 +14,18 @@ from copy import deepcopy
 from typing import Union
 
 from hybrid_mdmc import utility
-from filehandlers_general import parse_data_file
+from filehandlers import parse_data_file
 from hybrid_mdmc.frame_generator import frame_generator
 from hybrid_mdmc.diffusion import Diffusion
-from hybrid_mdmc.sensitivity_analysis_diffusion_rates import (
+from _auxiliary.sensitivity_analysis_diffusion_rates import (
     read_mvabfa_file,
     calculate_and_write_mvabfa,
 )
 from Archive.customargparse import HMDMC_ArgumentParser
 from hybrid_mdmc.voxels import Voxels
-from hybrid_mdmc.particle_interactions import AtomList, MoleculeList
+from interactions import AtomList, MoleculeList
 from reaction import gen_molecules
-from hybrid_mdmc.mean_displacement import read_msd_file
+from _auxiliary.mean_displacement import read_msd_file
 
 
 def main(argv):

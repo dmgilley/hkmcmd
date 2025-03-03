@@ -76,8 +76,6 @@ class Atom:
 class IntraMode:
 
     def __init__(self, ID=None, kind=None, atom_IDs=None):
-        if ID is not None and ID < 1:
-            raise ValueError("IntraMode ID must be greater than or equal to 1")
         self.ID = ID
         self.kind = kind
         self.atom_IDs = atom_IDs
@@ -99,7 +97,7 @@ class Molecule:
         dihedrals=None,
         impropers=None,
         cog=None,
-        voxel_idxs_tuple=None,
+        voxel_idx=None,
     ):
         self.ID = ID
         self.kind = kind
@@ -109,9 +107,13 @@ class Molecule:
         self.dihedrals = dihedrals
         self.impropers = impropers
         self.cog = cog
-        self.voxel_idxs_tuple = voxel_idxs_tuple
+        self.voxel_idx = voxel_idx
         self.check_for_json_inputs()
         return
+
+    @property
+    def atom_IDs(self):
+        return [_.ID for _ in self.atoms]
 
     def check_for_json_inputs(self):
         if self.atoms is not None:
@@ -132,6 +134,32 @@ class Molecule:
                     setattr(self, attr, [IntraMode(**_) for _ in intramode])
         return
 
+    def make_jsonable(self):
+        cog = deepcopy(self.cog)
+        if cog is not None:
+            cog = cog.tolist()
+        dict_ = {
+            "ID": self.ID,
+            "kind": self.kind,
+            "cog": cog,
+            "voxel_idx": self.voxel_idx,
+        }
+        if self.atoms is not None:
+            dict_.update(
+                {
+                    "atoms": [_.make_jsonable() for _ in self.atoms],
+                }
+            )
+        for attr in ["bonds", "angles", "dihedrals", "impropers"]:
+            intramode = getattr(self, attr)
+            if intramode is not None:
+                dict_.update(
+                    {
+                        attr: [_.make_jsonable() for _ in intramode],
+                    }
+                )
+        return dict_
+
     def fill_lists(
         self,
         atoms_list=None,
@@ -141,7 +169,10 @@ class Molecule:
         impropers_list=None,
     ):
         if atoms_list is not None:
-            self.atoms = [atom for atom in atoms_list if atom.molecule_ID == self.ID]
+            self.atoms = sorted(
+                [atom for atom in atoms_list if atom.molecule_ID == self.ID],
+                key=lambda atom: (atom.ID),
+            )
         if (
             len(
                 set(
@@ -163,29 +194,41 @@ class Molecule:
         else:
             self.kind = self.atoms[0].molecule_kind
         if bonds_list is not None:
-            self.bonds = [
-                bond
-                for bond in bonds_list
-                if set(bond.atom_IDs).issubset(self.atom_IDs)
-            ]
+            self.bonds = sorted(
+                [
+                    bond
+                    for bond in bonds_list
+                    if set(bond.atom_IDs).issubset(self.atom_IDs)
+                ],
+                key=lambda bond: (bond.ID),
+            )
         if angles_list is not None:
-            self.angles = [
-                angle
-                for angle in angles_list
-                if set(angle.atom_IDs).issubset(self.atom_IDs)
-            ]
+            self.angles = sorted(
+                [
+                    angle
+                    for angle in angles_list
+                    if set(angle.atom_IDs).issubset(self.atom_IDs)
+                ],
+                key=lambda angle: (angle.ID),
+            )
         if dihedrals_list is not None:
-            self.dihedrals = [
-                dihedral
-                for dihedral in dihedrals_list
-                if set(dihedral.atom_IDs).issubset(self.atom_IDs)
-            ]
+            self.dihedrals = sorted(
+                [
+                    dihedral
+                    for dihedral in dihedrals_list
+                    if set(dihedral.atom_IDs).issubset(self.atom_IDs)
+                ],
+                key=lambda dihedral: (dihedral.ID),
+            )
         if impropers_list is not None:
-            self.impropers = [
-                improper
-                for improper in impropers_list
-                if set(improper.atom_IDs).issubset(self.atom_IDs)
-            ]
+            self.impropers = sorted(
+                [
+                    improper
+                    for improper in impropers_list
+                    if set(improper.atom_IDs).issubset(self.atom_IDs)
+                ],
+                key=lambda improper: (improper.ID),
+            )
         return
 
     def unwrap_atomic_coordinates(self, box):
@@ -215,22 +258,21 @@ class Molecule:
             self.cog = utility.wrap_coordinates(self.cog, box)
         return self.cog
 
-    def assign_voxel_idxs_tuple(self, voxel_instance):
-        if self.cog is None:
-            self.calculate_cog(box=voxel_instance.box, wrap=True)
-        self.voxel_idxs_tuple = list(range(len(voxel_instance.IDs)))
+    def assign_voxel_idx(self, voxel_instance):
+        self.calculate_cog(box=voxel_instance.box, wrap=True)
+        self.voxel_idx = list(range(len(voxel_instance.IDs)))
         for dimension in range(3):
             bounds = np.array(voxel_instance.boundaries)[:, dimension, :]
-            self.voxel_idxs_tuple = [
+            self.voxel_idx = [
                 vidx
-                for vidx in self.voxel_idxs_tuple
+                for vidx in self.voxel_idx
                 if vidx
                 in np.where(
                     (self.cog[0, dimension] >= bounds[:, 0])
-                    & (self.cog[0, dimension] <= bounds[:, 1])
+                    & (self.cog[0, dimension] < bounds[:, 1])
                 )[0].tolist()
             ]
-        self.voxel_idxs_tuple = tuple(sorted(self.voxel_idxs_tuple))
+        self.voxel_idx = tuple(sorted(self.voxel_idx))
         return
 
     def translate(self, new_cog):
@@ -241,38 +283,15 @@ class Molecule:
             atom.x += difference[0, 0]
             atom.y += difference[0, 1]
             atom.z += difference[0, 2]
-        self.cog = new_cog
+        self.calculate_cog()
         return
 
-    @property
-    def atom_IDs(self):
-        return [_.ID for _ in self.atoms]
-
-    def make_jsonable(self):
-        cog = deepcopy(self.cog)
-        if cog is not None:
-            cog = cog.tolist()
-        dict_ = {
-            "ID": self.ID,
-            "kind": self.kind,
-            "cog": cog,
-            "voxel_idxs_tuple": self.voxel_idxs_tuple,
-        }
-        if self.atoms is not None:
-            dict_.update(
-                {
-                    "atoms": [_.make_jsonable() for _ in self.atoms],
-                }
-            )
-        for attr in ["bonds", "angles", "dihedrals", "impropers"]:
-            intramode = getattr(self, attr)
-            if intramode is not None:
-                dict_.update(
-                    {
-                        attr: [_.make_jsonable() for _ in intramode],
-                    }
-                )
-        return dict_
+    def rotate(self, angle_radians, axis):
+        coordinates = np.array([[_.x, _.y, _.z] for _ in self.atoms]).reshape(-1, 3)
+        coordinates = rotate_molecule(coordinates, angle_radians, axis)
+        for idx, atom in enumerate(self.atoms):
+            atom.x, atom.y, atom.z = coordinates[idx]
+        return
 
     def adjust_ID(self, new_ID):
         self.ID = new_ID
@@ -313,8 +332,8 @@ class Molecule:
             intramode.ID = map[intramode.ID]
         return
 
-    def clean_IDs(self):
-        self.adjust_ID(1)
+    def clean_IDs(self, new_ID=1):
+        self.adjust_ID(new_ID)
         if self.atoms is not None:
             IDmap = {atom.ID: idx + 1 for idx, atom in enumerate(self.atoms)}
             self.adjust_atom_IDs(map=IDmap)
@@ -336,11 +355,67 @@ class Molecule:
             self.adjust_intramode_IDs(map=IDmap, mode="impropers")
         return
 
-    def rotate(self, angle_radians, axis):
-        coordinates = np.array([[_.x, _.y, _.z] for _ in self.atoms]).reshape(-1, 3)
-        coordinates = rotate_molecule(coordinates, angle_radians, axis)
-        for idx, atom in enumerate(self.atoms):
-            atom.x, atom.y, atom.z = coordinates[idx]
+    def print(self):
+        print(f"Molecule ID: {self.ID}")
+        print(f"Kind: {self.kind}")
+        print(f"Center of geometry: {self.cog}")
+        print(f"Voxel index: {self.voxel_idx}")
+
+        # atoms
+        if self.atoms is not None:
+            print("Atoms:")
+            for atom in self.atoms:
+                print(f"    atom {atom.ID}")
+                for k, v in atom.__dict__.items():
+                    if v is not None:
+                        print(f"        {k}: {v}")
+        else:
+            print("Atoms: None")
+
+        # bonds
+        if self.bonds is not None:
+            print("Bonds:")
+            for bond in self.bonds:
+                print(f"    bond {bond.ID}")
+                for k, v in bond.__dict__.items():
+                    if v is not None:
+                        print(f"        {k}: {v}")
+        else:
+            print("Bonds: None")
+
+        # angles
+        if self.angles is not None:
+            print("Angles:")
+            for angle in self.angles:
+                print(f"    angle {angle.ID}")
+                for k, v in angle.__dict__.items():
+                    if v is not None:
+                        print(f"        {k}: {v}")
+        else:
+            print("Angles: None")
+
+        # dihedrals
+        if self.dihedrals is not None:
+            print("Dihedrals:")
+            for dihedral in self.dihedrals:
+                print(f"    dihedral {dihedral.ID}")
+                for k, v in dihedral.__dict__.items():
+                    if v is not None:
+                        print(f"        {k}: {v}")
+        else:
+            print("Dihedrals: None")
+
+        # impropers
+        if self.impropers is not None:
+            print("Impropers:")
+            for improper in self.impropers:
+                print(f"    improper {improper.ID}")
+                for k, v in improper.__dict__.items():
+                    if v is not None:
+                        print(f"       {k}: {v}")
+        else:
+            print("Impropers: None")
+
         return
 
 
@@ -435,7 +510,6 @@ class Reaction:
         for idx, molecule in enumerate(self.product_molecules):
 
             # molecule info
-            molecule.ID = -1
             molecule.calculate_cog()
             molecule.translate(
                 new_cogs[idx]
@@ -444,14 +518,12 @@ class Reaction:
             # atom info
             for atom in molecule.atoms:
                 atom.ID = template_atom_ID2real_atom_ID[atom.ID]
-                atom.molecule_ID = -1
 
             # bond/angle/dihedral/improper info
             for attr in ["bonds", "angles", "dihedrals", "impropers"]:
                 intramode_list = getattr(molecule, attr)
                 if intramode_list is not None:
                     for intramode in intramode_list:
-                        intramode.ID = -1
                         intramode.atom_IDs = [
                             template_atom_ID2real_atom_ID[_] for _ in intramode.atom_IDs
                         ]
@@ -467,7 +539,9 @@ class Reaction:
     def make_jsonable(self):
         dict_ = {}
         for k, v in self.__dict__.items():
-            if k == "reactant_molecules":
+            if v is None:
+                dict_[k] = None
+            elif k == "reactant_molecules":
                 dict_[k] = [_.make_jsonable() for _ in v]
             elif k == "product_molecules":
                 dict_[k] = [_.make_jsonable() for _ in v]
@@ -720,6 +794,7 @@ def remove_overlaps_from_molecules_list(
 
 
 def update_molecules_list_with_reaction(
+    molecules_list,
     reactive_event,
     box,
     tolerance=0.0000_0010,
@@ -741,11 +816,29 @@ def update_molecules_list_with_reaction(
 def get_interactions_lists_from_molcules_list(molecules_list):
 
     # Create interactions lists
-    atoms_list = utility.flatten_nested_list([molecule.atoms for molecule in molecules_list])    
-    bonds_list = utility.flatten_nested_list([molecule.bonds for molecule in molecules_list if molecule.bonds is not None])
-    angles_list = utility.flatten_nested_list([molecule.angles for molecule in molecules_list if molecule.angles is not None])
-    dihedrals_list = utility.flatten_nested_list([molecule.dihedrals for molecule in molecules_list if molecule.dihedrals is not None])
-    impropers_list = utility.flatten_nested_list([molecule.impropers for molecule in molecules_list if molecule.impropers is not None])
+    atoms_list = utility.flatten_nested_list(
+        [molecule.atoms for molecule in molecules_list]
+    )
+    bonds_list = utility.flatten_nested_list(
+        [molecule.bonds for molecule in molecules_list if molecule.bonds is not None]
+    )
+    angles_list = utility.flatten_nested_list(
+        [molecule.angles for molecule in molecules_list if molecule.angles is not None]
+    )
+    dihedrals_list = utility.flatten_nested_list(
+        [
+            molecule.dihedrals
+            for molecule in molecules_list
+            if molecule.dihedrals is not None
+        ]
+    )
+    impropers_list = utility.flatten_nested_list(
+        [
+            molecule.impropers
+            for molecule in molecules_list
+            if molecule.impropers is not None
+        ]
+    )
 
     # Sort lists by IDs
     atoms_list.sort(key=lambda atom: (atom.ID))
@@ -765,5 +858,5 @@ def get_interactions_lists_from_molcules_list(molecules_list):
         raise ValueError("Duplicate dihedral IDs")
     if len(impropers_list) != len(set([improper.ID for improper in impropers_list])):
         raise ValueError("Duplicate improper IDs")
-    
+
     return atoms_list, bonds_list, angles_list, dihedrals_list, impropers_list

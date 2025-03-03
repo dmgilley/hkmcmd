@@ -7,7 +7,7 @@
 import sys
 import numpy as np
 from hybrid_mdmc import utility
-from hybrid_mdmc.particle_interactions import (
+from hybrid_mdmc.interactions import (
     Molecule,
     update_molecules_list_IDs,
     remove_overlaps_from_molecules_list,
@@ -21,17 +21,13 @@ from hybrid_mdmc.reaction import (
     scalerxns,
     get_reactive_events_list,
 )
-from hybrid_mdmc.simulation_system import SystemState
-from hybrid_mdmc.filehandlers_general import (
-    hkmcmd_ArgumentParser,
-    SystemData,
-    parse_system_state_file,
-    parse_data_file,
-    parse_diffusion_file,
-)
-from hybrid_mdmc.filehandlers_lammps import (
+from hybrid_mdmc.system import SystemState, SystemData
+from hybrid_mdmc.filehandlers import (
     LammpsInitHandler,
     write_lammps_data,
+    hkmcmd_ArgumentParser,
+    parse_data_file,
+    parse_diffusion_file,
 )
 
 
@@ -100,13 +96,18 @@ def main(argv):
             impropers_list=impropers_list,
         )
         molecule.kind = system_state.get_molecule_kind(molecule.ID)
-        molecule.assign_voxel_idxs_tuple(voxels_datafile)
+        molecule.assign_voxel_idx(voxels_datafile)
 
     if args.debug is True:
         breakpoint()
 
     # Read in the diffusion rate dictionary holding the diffusion rates matrix for each species
-    diffusion_rates_dict_matrix = parse_diffusion_file(args.filename_diffusion)
+    diffusion_rates_dict_matrix = {
+        sp: np.ones((np.prod(voxels_datafile.number_of_voxels), np.prod(voxels_datafile.number_of_voxels)))*np.inf
+        for sp in [molecule.kind for molecule in system_data.species]
+    }
+    if system_data.scaling_diffusion["well-mixed"] is False:
+        diffusion_rates_dict_matrix = parse_diffusion_file(args.filename_diffusion)
 
     # Begin the KMC loop
     moleculecount_starting = len(molecules_list)
@@ -117,10 +118,10 @@ def main(argv):
         # Assemble DataFrames from the system_state instance.
         # Later, the functions that use these DataFrames can be updated to take the system_state instance.
         reaction_scaling_df = system_state.assemble_reaction_scaling_df()
-        progression_df = system_state.assemble_progression_df()
+        progression_df = system_state.assemble_progression_df(sorted([molecule.kind for molecule in system_data.species]))
 
         # Perform reaction scaling, if requested.
-        if system_data.hkmcmd["scalerates"] is True:
+        if system_data.hkmcmd["scale_rates"] is True:
             PSSrxns = get_PSSrxns(
                 system_data.reactions,
                 reaction_scaling_df,
@@ -162,6 +163,7 @@ def main(argv):
 
         # Update the system with the selected reaction
         molecules_list = update_molecules_list_with_reaction(
+            molecules_list,
             reactive_event,
             box,
             tolerance=0.0000_0010,
@@ -187,6 +189,10 @@ def main(argv):
     atoms_list, bonds_list, angles_list, dihedrals_list, impropers_list = (
         get_interactions_lists_from_molcules_list(molecules_list)
     )
+
+    if args.debug is True:
+        breakpoint()
+
     write_lammps_data(
         args.prefix + ".in.data",
         atoms_list,
