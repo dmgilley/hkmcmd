@@ -1097,7 +1097,7 @@ class hkmcmd_ArgumentParser:
         if self.args.filename_reaction is None:
             self.args.filename_reaction = self.args.prefix + ".reaction.txt"
         if self.args.filename_settings is None:
-            self.args.filename_settings = self.args.prefix + ".in.settings"
+            self.args.filename_settings = self.args.system + ".in.settings"
         return
 
     def parse_args(self):

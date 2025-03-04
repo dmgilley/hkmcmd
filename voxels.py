@@ -370,6 +370,9 @@ def find_voxel_neighbors_with_shaft_overlap_method(voxel_bounds: np.ndarray) -> 
         Values: list of voxel indices that are neighbors to the key voxel.
     """
 
+    if voxel_bounds.shape[0] == 1:
+        return {0: []}
+
     box_minima = [
         np.min(voxel_bounds[:, dimension, 0], axis=None) for dimension in range(3)
     ]
@@ -403,6 +406,7 @@ def find_voxel_neighbors_with_shaft_overlap_method(voxel_bounds: np.ndarray) -> 
                     if vidx in neighbor_idxs
                 ]
             ][:, dimension]
+            breakpoint()
             if primary_voxel_bounds[dimension, 0] == box_minima[dimension]:
                 bounds_of_comparison_voxels = np.concatenate(
                     (
