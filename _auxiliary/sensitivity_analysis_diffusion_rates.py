@@ -14,7 +14,7 @@ from copy import deepcopy
 from typing import Union
 
 from Archive.data_file_parser import parse_data_file
-from hybrid_mdmc.diffusion import (
+from calculate_diffusion import (
     Diffusion,
     calculate_molecular_voxel_assignments_by_frame_array,
 )
@@ -192,10 +192,10 @@ def main(argv):
             )
             diffusion.timesteps = deepcopy(mvabfa_timesteps)
             diffusion.timesteps = diffusion.timesteps[:total_frames]
-            diffusion.calculate_direct_voxel_transition_rates()
+            diffusion.calculate_local_rates()
             for spidx, sp in enumerate(species):
                 bar = "".join((["#"] * 100))
-                output_df = pd.DataFrame(diffusion.direct_voxel_transition_rates[sp])
+                output_df = pd.DataFrame(diffusion.local_diffusion_rates[sp])
                 output_files[spidx].write(f"\n\n{bar}\n")
                 output_files[spidx].write(f"NumberOfFrames {total_frames}\n")
                 output_files[spidx].write(
@@ -251,18 +251,18 @@ def main(argv):
                 )
 
                 # manually assign direct transition rates
-                diffusion.direct_voxel_transition_rates = deepcopy(
+                diffusion.local_diffusion_rates = deepcopy(
                     direct_voxel_transition_rates
                 )
-                diffusion.direct_voxel_transition_rates = {
+                diffusion.local_diffusion_rates = {
                     k: v[sorted(v.keys())[-1]]
-                    for k, v in diffusion.direct_voxel_transition_rates.items()
+                    for k, v in diffusion.local_diffusion_rates.items()
                 }
 
                 # calculate random walk rates
-                diffusion.calculate_diffusion_rates(
+                diffusion.calculate_global_diffusion_rates(
                     starting_position_idxs=np.arange(
-                        diffusion.direct_voxel_transition_rates[species[0]].shape[0]
+                        diffusion.local_diffusion_rates[species[0]].shape[0]
                     ),
                     number_of_steps=walk_length,
                     species=species,
@@ -272,7 +272,7 @@ def main(argv):
                 # write to file
                 for spidx, sp in enumerate(species):
                     bar = "".join((["#"] * 100))
-                    output_df = pd.DataFrame(diffusion.diffusion_rates[sp])
+                    output_df = pd.DataFrame(diffusion.global_diffusion_rates[sp])
                     output_files[spidx].write(f"\n\n{bar}\n")
                     output_files[spidx].write(f"RandomWalkLength {walk_length}\n")
                     output_files[spidx].write(f"RandomWalkReplicate {rep}\n")
