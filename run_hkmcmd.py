@@ -148,7 +148,7 @@ def main(argv):
             reaction_scaling_df,
             system_data.reactions,
             system_data.hkmcmd["diffusion_cutoff"],
-            avoid_double_counts=False,
+            avoid_double_counts=system_data.hkmcmd["avoid_double_counts"],
         )
 
         # Select a reaction
