@@ -26,6 +26,9 @@ def main(argv):
         default="all",
         help="Species to calculate diffusion rates for.",
     )
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing files."
+    )
     args = parser.parse_args()
     args.species = args.species.split(",")
 
@@ -81,7 +84,7 @@ def main(argv):
         molecule.kind = system_state.get_molecule_kind(molecule.ID)
 
     # Create log file
-    logfile = utility.FileTracker(args.prefix + ".diffusion.log")
+    logfile = FileTracker(args.prefix + ".diffusion.log")
 
     # Create the Diffusion object.
     diffusion_handler = Diffusion(
@@ -89,11 +92,11 @@ def main(argv):
         molecules_list,
         voxels_datafile,
         overwrite=args.overwrite,
-        fuzz=system_data.diffusion_scaling["fuzz"],
-        direct_transition_method=system_data.diffusion_scaling[
+        fuzz=system_data.scaling_diffusion["fuzz"],
+        direct_transition_method=system_data.scaling_diffusion[
             "direct_transition_rates_method"
         ],
-        global_rate_method=system_data.diffusion_scaling[
+        global_rate_method=system_data.scaling_diffusion[
             "global_diffusion_rates_method"
         ],
         filename_trajectory=args.filename_trajectory,
@@ -103,10 +106,10 @@ def main(argv):
     # Calculate the direct transition rates.
     diffusion_handler.calculate_direct_transition_rates(
         logfile=logfile,
-        start=system_data.diffusion_scaling["trj_parse_start"],
-        end=system_data.diffusion_scaling["trj_parse_end"],
-        every=system_data.diffusion_scaling["trj_parse_every"],
-        average_across_voxel_neighbors=system_data.diffusion_scaling[
+        start=system_data.scaling_diffusion["trj_parse_start"],
+        end=system_data.scaling_diffusion["trj_parse_end"],
+        every=system_data.scaling_diffusion["trj_parse_every"],
+        average_across_voxel_neighbors=system_data.scaling_diffusion[
             "average_across_voxel_neighbors"
         ],
     )
@@ -216,9 +219,9 @@ class Diffusion:
                 logfile=logfile,
             )
             mvabfa_file.write("MoleculeIDs\n")
-            mvabfa_file.write_array(molecule_IDs, as_str=True)
+            mvabfa_file.write_array(np.array(molecule_IDs).flatten(), as_str=True)
             mvabfa_file.write("Timesteps\n")
-            mvabfa_file.write_array(timesteps, as_str=True)
+            mvabfa_file.write_array(np.array(timesteps).flatten(), as_str=True)
             mvabfa_file.write("MVABFA\n")
             mvabfa_file.write_array2df(mvabfa)
         else:
@@ -251,7 +254,7 @@ class Diffusion:
                 self.name + ".direct_transition_rates.txt", overwrite=self.overwrite
             )
             for molecule_kind, rate in self.direct_transition_rates.items():
-                direct_transition_rates_file.write(f"\ntype {molecule_kind}\n")
+                direct_transition_rates_file.write(f"\n\ntype {molecule_kind}\n")
                 direct_transition_rates_file.write_array2df(rate)
         return self.direct_transition_rates
 
@@ -301,9 +304,9 @@ class Diffusion:
             [
                 [
                     j_idx in self.voxels.neighbors_dict[i_idx]
-                    for j_idx in range(np.prod(self.number_of_voxels))
+                    for j_idx in range(np.prod(self.voxels.number_of_voxels))
                 ]
-                for i_idx in range(np.prod(self.number_of_voxels))
+                for i_idx in range(np.prod(self.voxels.number_of_voxels))
             ]
         )
         self.random_walk_positions, self.random_walk_times = {}, {}
