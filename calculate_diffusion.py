@@ -20,7 +20,12 @@ def main(argv):
 
     # Parse command line arguments.
     parser = hkmcmd_ArgumentParser()
-    parser.add_argument("-species", type=str, default="all", help="Species to calculate diffusion rates for.")
+    parser.add_argument(
+        "-species",
+        type=str,
+        default="all",
+        help="Species to calculate diffusion rates for.",
+    )
     args = parser.parse_args()
     args.species = args.species.split(",")
 
@@ -85,7 +90,9 @@ def main(argv):
         voxels_datafile,
         overwrite=args.overwrite,
         fuzz=system_data.diffusion_scaling["fuzz"],
-        local_rate_method=system_data.diffusion_scaling["local_diffusion_rates_method"],
+        direct_transition_method=system_data.diffusion_scaling[
+            "direct_transition_rates_method"
+        ],
         global_rate_method=system_data.diffusion_scaling[
             "global_diffusion_rates_method"
         ],
@@ -93,8 +100,8 @@ def main(argv):
         time_conversion=system_data.lammps["time_conversion"],
     )
 
-    # Calculate the local diffusion rates.
-    diffusion_handler.calculate_local_diffusion_rates(
+    # Calculate the direct transition rates.
+    diffusion_handler.calculate_direct_transition_rates(
         logfile=logfile,
         start=system_data.diffusion_scaling["trj_parse_start"],
         end=system_data.diffusion_scaling["trj_parse_end"],
@@ -118,14 +125,11 @@ def main(argv):
 
     # Write the global diffusion rates to a file.
     file_diffusion = FileTracker(args.filename_diffusion)
-    file_diffusion.write(
-        "\n\n---------------------------------------------------------------------------\n\n"
-    )
+    file_diffusion.write_separation()
     file_diffusion.write(f"\nDiffusionStep 0\n")
     for k, v in sorted(global_diffusion_rates.items()):
-        output_df = pd.DataFrame(v)
         file_diffusion.write(f"\n\nDiffusion Rates for {k}\n")
-        file_diffusion.write(output_df.to_string(index=False, header=False))
+        file_diffusion.write_array2df(v)
 
     return
 
@@ -139,10 +143,11 @@ class Diffusion:
         voxels: Voxels,
         overwrite: bool = False,
         fuzz: float = 0.0,
-        local_rate_method: Union[None, str] = None,
+        time_conversion: float = 1.0,
+        direct_transition_method: Union[None, str] = None,
         global_rate_method: Union[None, str] = None,
         filename_trajectory: Union[None, str] = None,
-        time_conversion: Union[None, float] = None,
+        
     ):
 
         # Positional arguments
@@ -153,21 +158,19 @@ class Diffusion:
         # Optional arguments
         self.overwrite = overwrite
         self.fuzz = fuzz
-        self.local_rate_method = local_rate_method
-        if self.local_rate_method is None:
-            self.local_rate_method = "fuzzy_boundary"
+        self.time_conversion = time_conversion
+        self.direct_transition_method = direct_transition_method
+        if self.direct_transition_method is None:
+            self.direct_transition_method = "fuzzy_boundary"
         self.global_rate_method = global_rate_method
         if self.global_rate_method is None:
             self.global_rate_method = "random_walk"
         self.filename_trajectory = filename_trajectory
         if self.filename_trajectory is None:
             self.filename_trajectory = f"{self.name}.diffusion.lammpstrj"
-        self.time_conversion = time_conversion
-        if self.time_conversion is None:
-            self.time_conversion = 1.0
 
         # Attributes to be filled later
-        self.local_diffusion_rates = None
+        self.direct_transition_rates = None
         self.random_walk_positions = None
         self.random_walk_times = None
         self.random_walk_average_first_time_between_positions = None
@@ -175,20 +178,20 @@ class Diffusion:
 
         return
 
-    def calculate_local_diffusion_rates(
+    def calculate_direct_transition_rates(
         self,
-        logfile: Union[None, utility.FileTracker] = None,
+        logfile: Union[None, FileTracker] = None,
         time_conversion: Union[None, float] = None,
         start: int = 0,
         end: int = -1,
         every: int = 1,
         average_across_voxel_neighbors: bool = False,
     ):
-        """Calculate the local diffusion rates.
+        """Calculate the direct transition rates.
 
-        This method calculates the local diffusion rates for each voxel. The method used to
-        calculate the local diffusion rates is determined by the `local_rate_method` attribute of
-        the instance. The local diffusion rates are stored as an attribute of the class and returned
+        This method calculates the direct transition rates for each voxel. The method used to
+        calculate the direct transition rates is determined by the `local_rate_method` attribute of
+        the instance. The direct transition rates are stored as an attribute of the class and returned
         by this method.
         """
 
@@ -197,8 +200,8 @@ class Diffusion:
 
         # Read in or calculate the mvabfa.
         if os.path.exists(self.name + ".mvabfa.txt") and self.overwrite is False:
-            molecule_IDs, mvabfa = read_mvabfa_file(self.name + ".mvabfa.txt")
-        elif self.local_rate_method == "fuzzy_boundary":
+            molecule_IDs, timesteps, mvabfa = read_mvabfa_file(self.name + ".mvabfa.txt")
+        elif self.direct_transition_method == "fuzzy_boundary":
             mvabfa_file = FileTracker(
                 self.name + ".mvabfa.txt", overwrite=self.overwrite
             )
@@ -217,22 +220,22 @@ class Diffusion:
             mvabfa_file.write("Timesteps\n")
             mvabfa_file.write_array(timesteps, as_str=True)
             mvabfa_file.write("MVABFA\n")
-            mvabfa_file.write_array(mvabfa, as_str=True)
+            mvabfa_file.write_array2df(mvabfa)
         else:
             raise ValueError(
-                f"Local diffusion rate method {self.local_rate_method} not recognized."
+                f"direct transition rate method {self.direct_transition_method} not recognized."
             )
 
-        # Read in or calculate the local diffusion rates.
+        # Read in or calculate the direct transition rates.
         if (
-            os.path.exists(self.name + ".local_diffusion_rates.txt")
+            os.path.exists(self.name + ".direct_transition_rates.txt")
             and self.overwrite is False
         ):
-            self.local_diffusion_rates = read_local_diffusion_rates_file(
-                self.name + ".local_diffusion_rates.txt"
+            self.direct_transition_rates = read_direct_transition_rates_file(
+                self.name + ".direct_transition_rates.txt"
             )
         else:
-            self.local_diffusion_rates = calculate_local_rates(
+            self.direct_transition_rates = calculate_direct_transition_rates(
                 np.prod(self.voxels.number_of_voxels),
                 mvabfa,
                 (timesteps[1] - timesteps[0]) * time_conversion,
@@ -240,18 +243,17 @@ class Diffusion:
             )
             if average_across_voxel_neighbors is True:
                 for voxel_idxs in self.voxels.voxel_idxs_by_distance_groupings:
-                    for species in self.local_diffusion_rates.keys():
-                        self.local_diffusion_rates[species][voxel_idxs] = np.mean(
-                            self.local_diffusion_rates[species][voxel_idxs]
+                    for species in self.direct_transition_rates.keys():
+                        self.direct_transition_rates[species][voxel_idxs] = np.mean(
+                            self.direct_transition_rates[species][voxel_idxs]
                         )
-            local_diffusion_rates_file = FileTracker(
-                self.name + ".local_diffusion_rates.txt", overwrite=self.overwrite
+            direct_transition_rates_file = FileTracker(
+                self.name + ".direct_transition_rates.txt", overwrite=self.overwrite
             )
-            local_diffusion_rates_file.write("Local Diffusion Rates\n")
-            local_diffusion_rates_file.write_array(
-                self.local_diffusion_rates, as_str=True
-            )
-        return self.local_diffusion_rates
+            for molecule_kind, rate in self.direct_transition_rates.items():
+                direct_transition_rates_file.write(f"\ntype {molecule_kind}\n")
+                direct_transition_rates_file.write_array2df(rate)
+        return self.direct_transition_rates
 
     def perform_random_walks(
         self,
@@ -307,7 +309,7 @@ class Diffusion:
         self.random_walk_positions, self.random_walk_times = {}, {}
         for sp in species:
             transfer_rates = np.where(
-                nonneighbor_mask == True, self.local_diffusion_rates[sp], 0
+                nonneighbor_mask == True, self.direct_transition_rates[sp], 0
             )
             self.random_walk_positions[sp], self.random_walk_times[sp] = (
                 perform_random_walks(
@@ -411,80 +413,61 @@ class Diffusion:
 
 
 def read_mvabfa_file(filename):
-    raise NotImplementedError("read_mvabfa_file is not implemented.")
+    flag = None
+    with open(filename, "r") as f:
+        for line in f:
+            fields = line.split()
+            if len(fields) == 0:
+                continue
+            if fields[0] == "#":
+                continue
+            if fields[0] == "MoleculeIDs":
+                flag = fields[0]
+                continue
+            if fields[0] == "Timesteps":
+                flag = fields[0]
+                continue
+            if fields[0] == "MVABFA":
+                flag = fields[0]
+                mvabfa = []
+                continue
+            if flag == "MoleculeIDs":
+                molecule_IDs = np.array(fields, dtype=int).tolist()
+                continue
+            if flag == "Timesteps":
+                timesteps = np.array(fields, dtype=int).tolist()
+                continue
+            if flag == "MVABFA":
+                mvabfa.append([int(_) for _ in fields])
+                continue
+    mvabfa = np.array(mvabfa)
+    return molecule_IDs, timesteps, mvabfa
 
 
-def read_local_diffusion_rates_file(filename):
-    raise NotImplementedError("read_local_diffusion_rates_file is not implemented.")
+def read_direct_transition_rates_file(filename):
+    parse, molecule = False, None
+    rates = {}
+    with open(filename, "r") as f:
+        for line in f:
+            fields = line.split()
+            if len(fields) == 0:
+                continue
+            if fields[0] == "#":
+                continue
+            if fields[0] == "type":
+                parse = True
+                molecule = fields[1]
+                rates[molecule] = []
+                continue
+            if parse is True:
+                rates[molecule].append([float(_) for _ in fields])
+                continue
+    for molecule_kind, rate in rates.items():
+        rates[molecule_kind] = np.array(rate)
+    return rates
 
 
-def calculate_mvabfa_fuzzy_boundary(
-    filename_trajectory: str,
-    molecules_list: list,
-    number_of_voxels: list,
-    start: int = 0,
-    end: int = -1,
-    every: int = 1,
-    fuzz: float = 0.0,
-    logfile: Union[None, utility.FileTracker] = None,
-) -> tuple:
-
-    molecules_list = deepcopy(molecules_list)
-    atoms_list, _, _, _, _ = get_interactions_lists_from_molcules_list(molecules_list)
-    adj_list = [
-        [
-            idx2
-            for idx2, atom2 in enumerate(atoms_list)
-            if idx2 != idx1 and atom2.molecule_ID == atom1.molecule_ID
-        ]
-        for idx1, atom1 in enumerate(atoms_list)
-    ]
-    atomID2idx = {atom.ID: idx for idx, atom in enumerate(atoms_list)}
-    mvabfa_dict = {}
-    timesteps = []
-    generator_step = 1
-    for atoms_list_thisframe, timestep, box_thisframe, _ in frame_generator(
-        filename_trajectory,
-        start=start,
-        end=end,
-        every=every,
-        unwrap=True,
-        adj_list=adj_list,
-        return_prop=False,
-    ):
-        for molecule in molecules_list:
-            for atom in molecule.atoms:
-                atom.x = atoms_list_thisframe[atomID2idx[atom.ID]].x
-                atom.y = atoms_list_thisframe[atomID2idx[atom.ID]].y
-                atom.z = atoms_list_thisframe[atomID2idx[atom.ID]].z
-            molecule.calculate_cog(box=box_thisframe)
-        points = np.array(
-            [molecule.cog.flatten().tolist() for molecule in molecules_list]
-        )
-        mvabfa_dict[int(timestep)] = assign_points_to_voxels(
-            points, Voxels(box_thisframe, number_of_voxels), fuzz=fuzz
-        )
-        timesteps.append(int(timestep))
-        if logfile is not None and generator_step % 20 == 0:
-            logfile.write(
-                f"    {generator_step} frames parsed... {datetime.datetime.now()}\n"
-            )
-        generator_step += 1
-    mvabfa = np.array(
-        [
-            clean_voxel_assignments_list([mvabfa_dict[t][idx] for t in timesteps])
-            for idx, mol in enumerate(molecules_list)
-        ]
-    )
-    mvabfa = np.transpose(mvabfa)
-    return (
-        [molecule.ID for molecule in molecules_list],
-        timesteps,
-        mvabfa,
-    )
-
-
-def calculate_local_rates(
+def calculate_direct_transition_rates(
     total_number_of_voxels: int,
     molecular_voxel_assignment_by_frame_array: np.ndarray,
     adjacent_transition_time: float,
@@ -496,7 +479,7 @@ def calculate_local_rates(
     This function calculates the direct voxel transition rates, which are the rates at which
     molecules transition from one voxel to another. This is done by counting the number of
     transitions from one voxel to another for each molecule type, and dividing by time between
-    adjacent frames in teh trajectory file.
+    adjacent frames in the trajectory file.
 
     NOTE No neighbor mask is applied.
     NOTE Rates for a molecule to remain in a voxel (i.e. the matrix diagonal) ARE included.
@@ -648,6 +631,114 @@ def calculate_average_first_time_between_positions(
     )
 
 
+def add_ghost_voxels(adjusters, ghost_voxels_dict, voxel_centers):
+    add_array = deepcopy(voxel_centers)
+    for idx, adj in enumerate(adjusters):
+        add_array[:, idx] += adj
+    ghost_voxels_dict.update(
+        {
+            (idx, len(ghost_voxels_dict) + idx): val.tolist()
+            for idx, val in enumerate(add_array)
+        }
+    )
+    return ghost_voxels_dict
+
+
+def assemble_ghost_voxels_boundaries(voxel_boundaries, box, number_of_voxels):
+
+    # Prep
+    voxel_centers = np.mean(voxel_boundaries, axis=2)
+    ghost_voxels = {}
+    xsize = box[0][1] - box[0][0]
+    ysize = box[1][1] - box[1][0]
+    zsize = box[2][1] - box[2][0]
+
+    # Add faces
+    ghost_voxels = add_ghost_voxels([-xsize, 0, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([+xsize, 0, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, -ysize, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, +ysize, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, 0, -zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, 0, +zsize], ghost_voxels, voxel_centers)
+
+    # Add edges
+    ghost_voxels = add_ghost_voxels([-xsize, -ysize, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([-xsize, +ysize, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([+xsize, -ysize, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([+xsize, +ysize, 0], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([-xsize, 0, -zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([-xsize, 0, +zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([+xsize, 0, -zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([+xsize, 0, +zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, -ysize, -zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, -ysize, +zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, +ysize, -zsize], ghost_voxels, voxel_centers)
+    ghost_voxels = add_ghost_voxels([0, +ysize, +zsize], ghost_voxels, voxel_centers)
+
+    # Add corners
+    ghost_voxels = add_ghost_voxels(
+        [-xsize, -ysize, -zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [-xsize, -ysize, +zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [-xsize, +ysize, -zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [-xsize, +ysize, +zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [+xsize, -ysize, -zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [+xsize, -ysize, +zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [+xsize, +ysize, -zsize], ghost_voxels, voxel_centers
+    )
+    ghost_voxels = add_ghost_voxels(
+        [+xsize, +ysize, +zsize], ghost_voxels, voxel_centers
+    )
+
+    # Only keep ghost voxels touching the original voxels
+    ghost_voxel_keys = sorted(ghost_voxels.keys())
+    ghost_voxel_centers = np.array([v for k, v in sorted(ghost_voxels.items())])
+    center_bounds = np.array(
+        [np.min(voxel_centers, axis=0)] + [np.max(voxel_centers, axis=0)]
+    )
+    vsize_x = xsize / number_of_voxels[0]
+    vsize_y = ysize / number_of_voxels[1]
+    vsize_z = zsize / number_of_voxels[2]
+    new = np.argwhere(
+        np.logical_and.reduce(
+            (
+                ghost_voxel_centers[:, 0] >= center_bounds[0, 0] - vsize_x,
+                ghost_voxel_centers[:, 0] <= center_bounds[1, 0] + vsize_x,
+                ghost_voxel_centers[:, 1] >= center_bounds[0, 1] - vsize_y,
+                ghost_voxel_centers[:, 1] <= center_bounds[1, 1] + vsize_y,
+                ghost_voxel_centers[:, 2] >= center_bounds[0, 2] - vsize_z,
+                ghost_voxel_centers[:, 2] <= center_bounds[1, 2] + vsize_z,
+            )
+        )
+    ).flatten()
+    ghost_idxs = [k[0] for idx, k in enumerate(ghost_voxel_keys) if idx in new]
+    ghost_voxel_centers = ghost_voxel_centers[new]
+
+    # Transform from voxel centers to boundaries
+    ghost_voxel_minimums = ghost_voxel_centers - np.array(
+        [vsize_x / 2, vsize_y / 2, vsize_z / 2]
+    )
+    ghost_voxel_maximums = ghost_voxel_centers + np.array(
+        [vsize_x / 2, vsize_y / 2, vsize_z / 2]
+    )
+    ghost_voxel_boundaries = np.stack(
+        [ghost_voxel_minimums, ghost_voxel_maximums], axis=2
+    )
+
+    return ghost_idxs, ghost_voxel_boundaries
+
+
 def assign_points_to_voxels(points, voxels, fuzz=0.0):
     """Assign points to voxels.
 
@@ -657,24 +748,48 @@ def assign_points_to_voxels(points, voxels, fuzz=0.0):
     voxels (Voxels): Voxels object to assign points to.
     fuzz (float, optional): Fuzz factor to use when assigning points to voxels. Default: 0.0.
     """
+
+    # Create items
     voxel_boundaries = np.array(deepcopy(voxels.boundaries))
-    voxel_boundaries[:, :, 0] -= fuzz
-    voxel_boundaries[:, :, 1] += fuzz
-    points = utility.wrap_coordinates(points, voxels.box)
-    voxel_idxs = [
-        np.argwhere(
-            (point[0] >= voxel_boundaries[:, 0, 0])
-            & (point[0] <= voxel_boundaries[:, 0, 1])
-            & (point[1] >= voxel_boundaries[:, 1, 0])
-            & (point[1] <= voxel_boundaries[:, 1, 1])
-            & (point[2] >= voxel_boundaries[:, 2, 0])
-            & (point[2] <= voxel_boundaries[:, 2, 1])
+    voxel_idxs = list(range(np.prod(voxels.number_of_voxels)))
+
+    # If fuzzy boundaries are being applied, create ghost voxels
+    if fuzz != 0.0:
+        ghost_idxs, ghost_boundaries = assemble_ghost_voxels_boundaries(
+            voxel_boundaries, voxels.box, voxels.number_of_voxels
         )
-        .flatten()
-        .tolist()
+        voxel_boundaries = np.concatenate((voxel_boundaries, ghost_boundaries), axis=0)
+        voxel_boundaries[:, :, 0] -= fuzz
+        voxel_boundaries[:, :, 1] += fuzz
+        voxel_idxs += ghost_idxs
+
+    # Prep
+    voxel_idxs = np.array(voxel_idxs)
+    points = utility.wrap_coordinates(points, voxels.box)
+
+    # Assign
+    voxel_assignments = [
+        sorted(
+            list(
+                set(
+                    voxel_idxs[
+                        np.argwhere(
+                            (point[0] >= voxel_boundaries[:, 0, 0])
+                            & (point[0] <= voxel_boundaries[:, 0, 1])
+                            & (point[1] >= voxel_boundaries[:, 1, 0])
+                            & (point[1] <= voxel_boundaries[:, 1, 1])
+                            & (point[2] >= voxel_boundaries[:, 2, 0])
+                            & (point[2] <= voxel_boundaries[:, 2, 1])
+                        )
+                    ]
+                    .flatten()
+                    .tolist()
+                )
+            )
+        )
         for point in points
     ]
-    return voxel_idxs
+    return voxel_assignments
 
 
 def clean_voxel_assignments_list(voxel_idxs):
@@ -689,6 +804,73 @@ def clean_voxel_assignments_list(voxel_idxs):
             continue
         voxel_idxs[idx] = np.random.choice(val)
     return voxel_idxs
+
+
+def calculate_mvabfa_fuzzy_boundary(
+    filename_trajectory: str,
+    molecules_list: list,
+    number_of_voxels: list,
+    start: int = 0,
+    end: int = -1,
+    every: int = 1,
+    fuzz: float = 0.0,
+    logfile: Union[None, FileTracker] = None,
+) -> tuple:
+
+    molecules_list = deepcopy(molecules_list)
+    atoms_list, _, _, _, _ = get_interactions_lists_from_molcules_list(molecules_list)
+    adj_list = [
+        [
+            idx2
+            for idx2, atom2 in enumerate(atoms_list)
+            if idx2 != idx1 and atom2.molecule_ID == atom1.molecule_ID
+        ]
+        for idx1, atom1 in enumerate(atoms_list)
+    ]
+    atomID2idx = {atom.ID: idx for idx, atom in enumerate(atoms_list)}
+    mvabfa_dict = {}
+    timesteps = []
+    generator_step = 1
+    for atoms_list_thisframe, timestep, box_thisframe, _ in frame_generator(
+        filename_trajectory,
+        start=start,
+        end=end,
+        every=every,
+        unwrap=True,
+        adj_list=adj_list,
+        return_prop=False,
+    ):
+        box_thisframe = box_thisframe.flatten()
+        for molecule in molecules_list:
+            for atom in molecule.atoms:
+                atom.x = atoms_list_thisframe[atomID2idx[atom.ID]].x
+                atom.y = atoms_list_thisframe[atomID2idx[atom.ID]].y
+                atom.z = atoms_list_thisframe[atomID2idx[atom.ID]].z
+            molecule.calculate_cog(box=box_thisframe)
+        points = np.array(
+            [molecule.cog.flatten().tolist() for molecule in molecules_list]
+        )
+        mvabfa_dict[int(timestep)] = assign_points_to_voxels(
+            points, Voxels(box_thisframe, number_of_voxels), fuzz=fuzz
+        )
+        timesteps.append(int(timestep))
+        if logfile is not None and generator_step % 20 == 0:
+            logfile.write(
+                f"    {generator_step} frames parsed... {datetime.datetime.now()}\n"
+            )
+        generator_step += 1
+    mvabfa = np.array(
+        [
+            clean_voxel_assignments_list([mvabfa_dict[t][idx] for t in timesteps])
+            for idx, mol in enumerate(molecules_list)
+        ]
+    )
+    mvabfa = np.transpose(mvabfa)
+    return (
+        [molecule.ID for molecule in molecules_list],
+        timesteps,
+        mvabfa,
+    )
 
 
 if __name__ == "__main__":

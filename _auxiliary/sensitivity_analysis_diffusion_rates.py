@@ -195,7 +195,7 @@ def main(argv):
             diffusion.calculate_local_rates()
             for spidx, sp in enumerate(species):
                 bar = "".join((["#"] * 100))
-                output_df = pd.DataFrame(diffusion.local_diffusion_rates[sp])
+                output_df = pd.DataFrame(diffusion.direct_transition_rates[sp])
                 output_files[spidx].write(f"\n\n{bar}\n")
                 output_files[spidx].write(f"NumberOfFrames {total_frames}\n")
                 output_files[spidx].write(
@@ -251,18 +251,18 @@ def main(argv):
                 )
 
                 # manually assign direct transition rates
-                diffusion.local_diffusion_rates = deepcopy(
+                diffusion.direct_transition_rates = deepcopy(
                     direct_voxel_transition_rates
                 )
-                diffusion.local_diffusion_rates = {
+                diffusion.direct_transition_rates = {
                     k: v[sorted(v.keys())[-1]]
-                    for k, v in diffusion.local_diffusion_rates.items()
+                    for k, v in diffusion.direct_transition_rates.items()
                 }
 
                 # calculate random walk rates
                 diffusion.calculate_global_diffusion_rates(
                     starting_position_idxs=np.arange(
-                        diffusion.local_diffusion_rates[species[0]].shape[0]
+                        diffusion.direct_transition_rates[species[0]].shape[0]
                     ),
                     number_of_steps=walk_length,
                     species=species,

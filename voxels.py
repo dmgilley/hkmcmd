@@ -406,7 +406,6 @@ def find_voxel_neighbors_with_shaft_overlap_method(voxel_bounds: np.ndarray) -> 
                     if vidx in neighbor_idxs
                 ]
             ][:, dimension]
-            breakpoint()
             if primary_voxel_bounds[dimension, 0] == box_minima[dimension]:
                 bounds_of_comparison_voxels = np.concatenate(
                     (

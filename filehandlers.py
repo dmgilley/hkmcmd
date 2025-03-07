@@ -1041,6 +1041,12 @@ class FileTracker:
         with open(self.name, "a") as f:
             f.write(f"{preamble}{array}\n")
         return
+    
+    def write_array2df(self, array):
+        df = pd.DataFrame(array)
+        with open(self.name, "a") as f:
+            f.write(df.to_string(header=False, index=False))
+        return
 
 
 class hkmcmd_ArgumentParser:
