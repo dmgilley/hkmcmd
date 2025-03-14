@@ -61,8 +61,8 @@ def main(argv):
 
     # Check that system_data is consistent with rs@md[rate] requirements
     issues = []
-    if system_data.scaling_diffusion["diffusion_cutoff"] != np.inf:
-        system_data.scaling_diffusion["diffusion_cutoff"] = np.inf
+    if system_data.hkmcmd["diffusion_cutoff"] != np.inf:
+        system_data.hkmcmd["diffusion_cutoff"] = np.inf
         issues.append("diffusion_cutoff")
     if system_data.hkmcmd["scale_rates"] is True:
         system_data.hkmcmd["scale_rates"] = False
@@ -74,7 +74,7 @@ def main(argv):
         warnings.warn(f"rs@md[rate] reset the following settings: {issues}.")
 
     # Calculate reaction window time
-    rxn_dt = system_data.MD_cycling["run_steps"][3] * system_data.lammps["time_conversion"]
+    rxn_dt = system_data.MD_cycling["run_steps"][3] * system_data.MD_cycling["run_stepsize"][3] * system_data.lammps["time_conversion"]
 
     # Read the data file
     (
@@ -133,7 +133,7 @@ def main(argv):
     }
     for sp in diffusion_rates_dict_matrix:
         diffusion_rates_dict_matrix[sp].fill(0)
-        diffusion_rates_dict_matrix[sp][voxels_datafile.voxel_idxs_by_distance_groupings[0]] = np.inf
+        np.fill_diagonal(diffusion_rates_dict_matrix[sp], np.inf)
 
     # Begin the KMC loop
     moleculecount_starting = len(molecules_list)
@@ -157,15 +157,18 @@ def main(argv):
         )
 
         # Select a reaction
-        selected_reactive_events = kMC_event_selection_rsATmd(reactive_events_list)
+        selected_reactive_events = kMC_event_selection_rsATmd(reactive_events_list, rxn_dt)
         for event in selected_reactive_events:
-            event.calculate_event_rate(
+            event.create_product_molecules(
                 [
                     reaction
                     for reaction in system_data.reactions
                     if reaction.kind == event.kind
                 ][0]
             )
+
+        if args.debug is True:
+            breakpoint()
 
         # Update the system with the selected reaction
         molecules_list = update_molecules_list_with_reaction_rsATmd(
@@ -182,9 +185,6 @@ def main(argv):
 
         # Check for completion.
         Reacting = False
-
-    # Write the system_state file
-    system_state.write_to_json(args.filename_system_state)
 
     # Write the LAMMPS data file
     atoms_list, bonds_list, angles_list, dihedrals_list, impropers_list = (
@@ -226,6 +226,9 @@ def main(argv):
     )
     lammps_init.write()
 
+    # Write the system_state file
+    system_state.write_to_json(args.filename_system_state)
+
     return
 
 
@@ -236,8 +239,8 @@ def update_molecules_list_with_reaction_rsATmd(
     tolerance=0.0000_0010,
     maximum_iterations=None,
 ):
-    reactant_molecules = [event.reactant_molecules for event in reactive_events]
-    product_molecules = [event.product_molecules for event in reactive_events]
+    reactant_molecules = utility.flatten_nested_list([event.reactant_molecules for event in reactive_events])
+    product_molecules = utility.flatten_nested_list([event.product_molecules for event in reactive_events])
     molecules_list = [
         molecule
         for molecule in molecules_list
@@ -253,12 +256,17 @@ def update_molecules_list_with_reaction_rsATmd(
 
 def kMC_event_selection_rsATmd(event_list, dt):
     selected_events = []
+    reacted_atomIDs = []
     for event in event_list:
+        reactive_atomIDs = utility.flatten_nested_list([mol.atom_IDs for mol in event.reactant_molecules])
+        if len(np.intersect1d(reactive_atomIDs, reacted_atomIDs)) > 0:
+            continue
         u2 = 0
         while u2 == 0:
             u2 = np.random.random()
         if event.event_rate * dt > u2:
             selected_events.append(event)
+            reacted_atomIDs += reactive_atomIDs
     return selected_events
 
 
