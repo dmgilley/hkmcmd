@@ -1,0 +1,279 @@
+{
+    "hkmcmd": {
+        "temperature_rxn": 188.15,
+	    "temperature_rxn_units": "K",
+        "diffusion_cutoff": 0.0,
+        "change_threshold": 0.05,
+	    "scale_rates": false,
+        "msd_start": 0,
+        "msd_end": -1,
+        "msd_every": 1
+    },
+    "scaling_reaction": {
+        "concentration_cycles": 1e99,
+        "concentration_slope": 0.0,
+        "reaction_selection_count": 1e99,
+        "windowsize_rxnselection": 1e99,
+        "windowsize_slope": 1e99,
+        "windowsize_scalingpause": 1e99,
+        "scaling_factor": 1.0,
+        "scaling_minimum": 1.0
+    },
+    "scaling_diffusion": {
+        "number_of_voxels":[3,3,3],
+        "x_bounds": null,
+        "y_bounds": null,
+        "z_bounds": null,
+        "local_diffusion_rates_method": "fuxxy_boundary",
+        "global_diffusion_rates_method": "random_walk",
+        "well-mixed": true
+    },
+    "lammps": {
+        "units": "lj",
+        "LJ_mass": 2.65692461e-26,
+        "LJ_mass_units": "kg",
+        "LJ_distance": 3.4e-10,
+        "LJ_distance_units": "m",
+        "LJ_energy": 2.04964162e-21,
+        "LJ_energy_units": "J",
+        "LJ_stepsize": 0.001,
+        "time_conversion": 20,
+        "atom_style": "full",
+        "pair_style": "lj/cut 10.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "harmonic",
+        "improper_style": "harmonic",
+        "atom_types": 1,
+        "bond_types": 1,
+        "angle_types": 0,
+        "dihedral_types": 0,
+        "improper_types": 0,
+        "starting_A": 1,
+        "starting_A2": 1,
+        "charged_atoms": true
+    },
+    "species": [
+        {
+            "ID": 1,
+            "kind": "A",
+            "cog": null,
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": "A",
+                    "mass": 1.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "A",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                }
+            ]
+        },
+        {
+            "ID": 1,
+            "kind": "A2",
+            "cog": null,
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": "A",
+                    "mass": 1.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "A2",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                },
+                {
+                    "ID": 2,
+                    "kind": 1,
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": "A",
+                    "mass": 1.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "A2",
+                    "x": 2.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                }
+            ],
+            "bonds": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "atom_IDs": [
+                        1,
+                        2
+                    ]
+                }
+            ]
+        }
+    ],
+    "reactions": [],
+    "MD_initial": {
+        "run_name": [
+            "shrink",
+            "viscous",
+            "diffusion",
+            "unviscous"
+        ],
+        "run_style": [
+            "nvt deform",
+            "other",
+            "nvt",
+            "other"
+        ],
+        "run_stepsize": [
+            0.001,
+            0,
+            0.001,
+            0
+        ],
+        "run_steps": [
+            15000,
+            0,
+            50000,
+            0
+        ],
+        "run_temperature": [
+            "1.267 1.267 0.425",
+            0,
+            "1.267 1.267 0.425",
+            0
+        ],
+        "run_pressure_volume": [
+            "1 x final -5.25 5.25 y final -5.25 5.25 z final -5.25 5.25 units box",
+            "group As type 1\nfix viscosity As viscous 10.0",
+            null,
+            "unfix viscosity"
+        ],
+        "thermo_freq": 100,
+        "coords_freq": 100,
+        "avg_calculate_every": 50,
+        "avg_number_of_steps": 10,
+        "avg_stepsize": 5,
+        "units": "lj",
+        "atom_style": "full",
+        "dimension": 3,
+        "newton": "on",
+        "pair_style": "lj/cut 3.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "opls",
+        "improper_style": "cvff",
+        "thermo_keywords": "temp press ke pe ebond evdwl",
+        "neigh_modify": "every 5 delay 0 check no one 10000",
+        "write_trajectories": true,
+        "write_intermediate_restarts": false,
+        "write_final_data": true,
+        "write_final_restarts": true
+    },
+    "MD_cycling": {
+        "run_name": [
+            "relax",
+            "equil",
+            "viscous",
+            "diffusion",
+            "unviscous"
+        ],
+        "run_style": [
+            "nve/limit",
+            "nvt",
+            "other",
+            "nvt",
+            "other"
+        ],
+        "run_stepsize": [
+            0.00025,
+            0.001,
+            0,
+            0.001,
+            0
+        ],
+        "run_steps": [
+            500,
+            3000,
+            0,
+            100000,
+            0
+        ],
+        "run_temperature": [
+            "1.267 1.267 0.425",
+            "1.267 1.267 0.425",
+            0,
+            "1.267 1.267 0.425",
+            0
+        ],
+        "run_pressure_volume": [
+            0.03,
+            "-",
+            "group As type 1\nfix viscosity As viscous 10.0",
+            "-",
+            "unfix viscosity"
+        ],
+        "thermo_freq": 100,
+        "coords_freq": 100,
+        "avg_calculate_every": 50,
+        "avg_number_of_steps": 10,
+        "avg_stepsize": 5,
+        "units": "lj",
+        "atom_style": "full",
+        "dimension": 3,
+        "newton": "on",
+        "pair_style": "lj/cut 3.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "opls",
+        "improper_style": "cvff",
+        "thermo_keywords": "temp press ke pe ebond evdwl",
+        "neigh_modify": "every 5 delay 0 check no one 10000",
+        "write_trajectories": true,
+        "write_intermediate_restarts": false,
+        "write_final_data": true,
+        "write_final_restarts": true
+    }
+}

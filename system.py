@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Author
 #    Dylan Gilley
-#    dgilley@purdue.edu
+#    dylan.gilley@gmail.com
 
 
 import json, os
@@ -330,6 +330,16 @@ class SystemData:
         if None in [_[1] for _ in masses]:
             raise ValueError("Masses must be defined for all atoms.")
         return masses
+
+    @property
+    def lammps_timestep_size(self):
+        idx = self.MD_initial["run_name"].index("diffusion")
+        initial_stepsize = self.MD_initial["run_stepsize"][idx]
+        idx = self.MD_cycling["run_name"].index("diffusion")
+        cycling_stepsize = self.MD_cycling["run_stepsize"][idx]
+        if initial_stepsize == cycling_stepsize:
+            return initial_stepsize
+        return self.lammps["LJ_stepsize"]
 
     def read_json(self):
         if not os.path.exists(self.filename_json):

@@ -1,0 +1,38 @@
+{
+    "filename": "msd_fiction.system_state.json",
+    "atom_IDs": [
+        1,
+        2,
+        3
+    ],
+    "reaction_kinds": [],
+    "diffusion_steps": [
+        0
+    ],
+    "reactive_steps": [
+        0
+    ],
+    "times": [
+        0.0
+    ],
+    "molecule_IDs": [
+        [
+            1,
+            2,
+            2
+        ]
+    ],
+    "molecule_kinds": [
+        [
+            "A",
+            "A2",
+            "A2"
+        ]
+    ],
+    "reaction_selections": [
+        []
+    ],
+    "reaction_scalings": [
+        []
+    ]
+}

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-#
-# Author:
+# Author
 #    Dylan Gilley
 #    dylan.gilley@gmail.com
 
@@ -106,6 +105,7 @@ def main(argv):
     # Calculate the direct transition rates.
     diffusion_handler.calculate_direct_transition_rates(
         logfile=logfile,
+        lammps_stepsize=system_data.lammps_timestep_size,
         start=system_data.scaling_diffusion["trj_parse_start"],
         end=system_data.scaling_diffusion["trj_parse_end"],
         every=system_data.scaling_diffusion["trj_parse_every"],
@@ -185,6 +185,7 @@ class Diffusion:
         self,
         logfile: Union[None, FileTracker] = None,
         time_conversion: Union[None, float] = None,
+        lammps_stepsize: float = 1.0,
         start: int = 0,
         end: int = -1,
         every: int = 1,
@@ -241,7 +242,7 @@ class Diffusion:
             self.direct_transition_rates = calculate_direct_transition_rates(
                 np.prod(self.voxels.number_of_voxels),
                 mvabfa,
-                (timesteps[1] - timesteps[0]) * time_conversion,
+                (timesteps[1] - timesteps[0]) * lammps_stepsize * time_conversion,
                 self.molecules_list,
             )
             if average_across_voxel_neighbors is True:
