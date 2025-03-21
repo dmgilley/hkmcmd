@@ -505,21 +505,25 @@ def calculate_direct_transition_rates(
             transition rate from voxel i to voxel j.
     """
 
-    voxel_transition_counts = {
+    direct_transition_rates = {}
+    direct_transition_counts = {
         _: np.zeros((total_number_of_voxels, total_number_of_voxels))
         for _ in set([mol.kind for mol in molecules_list])
     }
-    for midx, mol in enumerate(molecules_list):
-        voxel_list = molecular_voxel_assignment_by_frame_array[:, midx].flatten()
-        voxel_list_shifted = np.roll(voxel_list, -1)
-        transitions = np.column_stack((voxel_list, voxel_list_shifted))
-        to_from, count = np.unique(transitions[:-1, :], axis=0, return_counts=True)
-        for idx, tf in enumerate((to_from)):
-            voxel_transition_counts[mol.kind][tf[0], tf[1]] += count[idx]
-    return {
-        mol_type: vt_counts / adjacent_transition_time
-        for mol_type, vt_counts in voxel_transition_counts.items()
-    }
+    for mol_kind, direct_transition_counts_here in direct_transition_counts.items():
+        mol_idxs = [idx for idx, mol in enumerate(molecules_list) if mol.kind == mol_kind]
+        positions = molecular_voxel_assignment_by_frame_array[:, mol_idxs]
+        for midx in mol_idxs:
+            voxel_list = molecular_voxel_assignment_by_frame_array[:, midx].flatten()
+            voxel_list_shifted = np.roll(voxel_list, -1)
+            transitions = np.column_stack((voxel_list, voxel_list_shifted))
+            to_from, count = np.unique(transitions[:-1, :], axis=0, return_counts=True)
+            for idx, tf in enumerate((to_from)):
+                direct_transition_counts_here[tf[0], tf[1]] += count[idx]
+        direct_transition_rates[mol_kind] = (
+            direct_transition_counts_here / adjacent_transition_time / np.unique(positions[:-1,:], return_counts=True)[1][:,None]
+        )
+    return direct_transition_rates
 
 
 def perform_random_walks(
