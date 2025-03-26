@@ -1,0 +1,594 @@
+{
+    "hkmcmd": {
+        "temperature_rxn": 126.48,
+        "temperature_rxn_units": "K",
+        "diffusion_cutoff": 0.0,
+        "change_threshold": 0.05,
+        "scale_rates": false,
+        "avoid_double_counts": true,
+        "msd_start": 0,
+        "msd_every": 1,
+        "msd_end": -1
+    },
+    "scaling_reaction": {
+        "concentration_cycles": 1e+99,
+        "concentration_slope": 0.0,
+        "reaction_selection_count": 1e+99,
+        "windowsize_rxnselection": 1e+99,
+        "windowsize_slope": 1e+99,
+        "windowsize_scalingpause": 1e+99,
+        "scaling_factor": 1.0,
+        "scaling_minimum": 1.0
+    },
+    "scaling_diffusion": {
+        "number_of_voxels": [
+            6,
+            6,
+            6
+        ],
+        "x_bounds": null,
+        "y_bounds": null,
+        "z_bounds": null,
+        "direct_transition_rates_method": "fuzzy_boundary",
+        "global_diffusion_rates_method": "random_walk",
+        "fuzz": 0.1,
+        "trj_parse_start": 1,
+        "trj_parse_every": 1,
+        "trj_parse_end": -1,
+        "average_across_voxel_neighbors": true,
+        "recursion_interval": 1,
+        "well-mixed": true
+    },
+    "lammps": {
+        "units": "lj",
+        "LJ_mass": 2.65692461e-26,
+        "LJ_mass_units": "kg",
+        "LJ_distance": 3.4e-10,
+        "LJ_distance_units": "m",
+        "LJ_energy": 2.04964162e-21,
+        "LJ_energy_units": "J",
+        "LJ_stepsize": 0.001,
+        "time_conversion": 1.22e-12,
+        "atom_style": "full",
+        "pair_style": "lj/cut 10.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "harmonic",
+        "improper_style": "harmonic",
+        "atom_types": 2,
+        "bond_types": 1,
+        "angle_types": 0,
+        "dihedral_types": 0,
+        "improper_types": 0,
+        "starting_A": 400,
+        "starting_A2": 0,
+        "starting_B": 1000,
+        "charged_atoms": true
+    },
+    "species": [
+        {
+            "ID": 1,
+            "kind": "A",
+            "cog": null,
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": null,
+                    "mass": 1.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "A",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                }
+            ]
+        },
+        {
+            "ID": 1,
+            "kind": "A2",
+            "cog": null,
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": null,
+                    "mass": 1.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "A2",
+                    "x": -0.5,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                },
+                {
+                    "ID": 2,
+                    "kind": 1,
+                    "lammps_type": 1,
+                    "taffi_type": null,
+                    "element": null,
+                    "mass": 1.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "A2",
+                    "x": 0.5,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                }
+            ],
+            "bonds": [
+                {
+                    "ID": 1,
+                    "kind": 1,
+                    "atom_IDs": [
+                        1,
+                        2
+                    ]
+                }
+            ]
+        },
+        {
+            "ID": 1,
+            "kind": "B",
+            "cog": null,
+            "voxel_idx": null,
+            "atoms": [
+                {
+                    "ID": 1,
+                    "kind": 2,
+                    "lammps_type": 2,
+                    "taffi_type": null,
+                    "element": null,
+                    "mass": 2.0,
+                    "molecule_ID": 1,
+                    "molecule_kind": "B",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "vx": null,
+                    "vy": null,
+                    "vz": null,
+                    "fx": null,
+                    "fy": null,
+                    "fz": null,
+                    "q1": null,
+                    "q2": null,
+                    "q3": null,
+                    "q4": null,
+                    "charge": 0.0
+                }
+            ]
+        }
+    ],
+    "reactions": [
+        {
+            "ID": 1,
+            "kind": 1,
+            "reactant_molecules": [
+                {
+                    "ID": 1,
+                    "kind": "A",
+                    "cog": null,
+                    "voxel_idx": null,
+                    "atoms": [
+                        {
+                            "ID": 1,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 1,
+                            "molecule_kind": "A",
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        }
+                    ]
+                },
+                {
+                    "ID": 2,
+                    "kind": "A",
+                    "cog": null,
+                    "voxel_idx": null,
+                    "atoms": [
+                        {
+                            "ID": 2,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 2,
+                            "molecule_kind": "A",
+                            "x": 1.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        }
+                    ]
+                }
+            ],
+            "product_molecules": [
+                {
+                    "ID": 3,
+                    "kind": "A2",
+                    "cog": null,
+                    "voxel_idx": null,
+                    "atoms": [
+                        {
+                            "ID": 1,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 3,
+                            "molecule_kind": "A2",
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        },
+                        {
+                            "ID": 2,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 3,
+                            "molecule_kind": "A2",
+                            "x": 1.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        }
+                    ],
+                    "bonds": [
+                        {
+                            "ID": 1,
+                            "kind": 1,
+                            "atom_IDs": [
+                                1,
+                                2
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "Ea": 4.0511,
+            "Ea_units": "kcal/mol",
+            "A": 100000000.0,
+            "A_units": "1/s",
+            "b": 0.0,
+            "event_rate": null,
+            "event_rate_units": "1/s",
+            "translation": 0.5,
+            "rawrate": null
+        },
+        {
+            "ID": 2,
+            "kind": 2,
+            "reactant_molecules": [
+                {
+                    "ID": 1,
+                    "kind": "A2",
+                    "cog": null,
+                    "voxel_idx": null,
+                    "atoms": [
+                        {
+                            "ID": 1,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 1,
+                            "molecule_kind": "A2",
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        },
+                        {
+                            "ID": 2,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 1,
+                            "molecule_kind": "A2",
+                            "x": 1.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        }
+                    ],
+                    "bonds": [
+                        {
+                            "ID": 1,
+                            "kind": 1,
+                            "atom_IDs": [
+                                1,
+                                2
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "product_molecules": [
+                {
+                    "ID": 2,
+                    "kind": "A",
+                    "cog": null,
+                    "voxel_idx": null,
+                    "atoms": [
+                        {
+                            "ID": 1,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 2,
+                            "molecule_kind": "A",
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        }
+                    ]
+                },
+                {
+                    "ID": 3,
+                    "kind": "A",
+                    "cog": null,
+                    "voxel_idx": null,
+                    "atoms": [
+                        {
+                            "ID": 2,
+                            "kind": 1,
+                            "lammps_type": 1,
+                            "taffi_type": null,
+                            "element": null,
+                            "mass": 1.0,
+                            "molecule_ID": 3,
+                            "molecule_kind": "A",
+                            "x": 1.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "vx": null,
+                            "vy": null,
+                            "vz": null,
+                            "fx": null,
+                            "fy": null,
+                            "fz": null,
+                            "q1": null,
+                            "q2": null,
+                            "q3": null,
+                            "q4": null,
+                            "charge": 0.0
+                        }
+                    ]
+                }
+            ],
+            "Ea": 2.8937,
+            "Ea_units": "kcal/mol",
+            "A": 100000000.0,
+            "A_units": "1/s",
+            "b": 0.0,
+            "event_rate": null,
+            "event_rate_units": "1/s",
+            "translation": 0.5,
+            "rawrate": null
+        }
+    ],
+    "MD_initial": {
+        "run_name": [
+            "shrink",
+            "diffusion"
+        ],
+        "run_style": [
+            "nvt deform",
+            "nvt"
+        ],
+        "run_stepsize": [
+            0.001,
+            0.001
+        ],
+        "run_steps": [
+            15000,
+            50000
+        ],
+        "run_temperature": [
+            "0.852 0.852 0.425",
+            "0.852 0.852 0.425"
+        ],
+        "run_pressure_volume": [
+            "1 x final -5.25 5.25 y final -5.25 5.25 z final -5.25 5.25 units box",
+            null
+        ],
+        "thermo_freq": 100,
+        "coords_freq": 200,
+        "avg_calculate_every": 50,
+        "avg_number_of_steps": 10,
+        "avg_stepsize": 5,
+        "units": "lj",
+        "atom_style": "full",
+        "dimension": 3,
+        "newton": "on",
+        "pair_style": "lj/cut 3.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "opls",
+        "improper_style": "cvff",
+        "thermo_keywords": "temp press ke pe ebond evdwl",
+        "neigh_modify": "every 5 delay 0 check no one 10000",
+        "write_trajectories": true,
+        "write_intermediate_restarts": false,
+        "write_final_data": true,
+        "write_final_restarts": true
+    },
+    "MD_cycling": {
+        "run_name": [
+            "relax",
+            "equil",
+            "diffusion"
+        ],
+        "run_style": [
+            "nve/limit",
+            "nve",
+            "nve"
+        ],
+        "run_stepsize": [
+            0.00025,
+            0.001,
+            0.001
+        ],
+        "run_steps": [
+            1000,
+            2000,
+            10000
+        ],
+        "run_temperature": [
+            "0.852 0.852 0.425",
+            "0.852 0.852 0.425",
+            "0.852 0.852 0.425"
+        ],
+        "run_pressure_volume": [
+            0.03,
+            null,
+            null
+        ],
+        "thermo_freq": 100,
+        "coords_freq": 100,
+        "avg_calculate_every": 50,
+        "avg_number_of_steps": 10,
+        "avg_stepsize": 5,
+        "units": "lj",
+        "atom_style": "full",
+        "dimension": 3,
+        "newton": "on",
+        "pair_style": "lj/cut 3.0",
+        "bond_style": "harmonic",
+        "angle_style": "harmonic",
+        "dihedral_style": "opls",
+        "improper_style": "cvff",
+        "thermo_keywords": "temp press ke pe ebond evdwl",
+        "neigh_modify": "every 5 delay 0 check no one 10000",
+        "write_trajectories": true,
+        "write_intermediate_restarts": false,
+        "write_final_data": true,
+        "write_final_restarts": true
+    }
+}

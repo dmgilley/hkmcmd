@@ -137,8 +137,8 @@ Included in this directory are the following files:
 - kmctoy.sh
 
 ~ Output Files ~
-- kmctoy_ref.system_state.json
 - kmctoy_ref.summary.txt
+- kmctoy_ref.pdf (reference plot)
 
 ~ Jupyter Notebooks ~
 - build.ipynb (build the necessary files to run HkMCMD)

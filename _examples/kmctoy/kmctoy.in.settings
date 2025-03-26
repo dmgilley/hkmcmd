@@ -1,0 +1,9 @@
+# Non-bonded interactions (lj/cut)
+#		atom i    atom j    epsilon (kcal/mol)    sigma (Angstrom)
+  pair_coeff       1        1          0.46746941            3.40000000
+  pair_coeff       1        2          0.46746941            3.40000000
+  pair_coeff       2        2          0.46746941            3.40000000
+
+# Stretching interactions (harmonic)
+#               bond type    K (kcal/mol/Angstrom^2)    r0 (Angstrom)
+  bond_coeff       1                59.0000                1.5000
