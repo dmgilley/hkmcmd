@@ -62,7 +62,7 @@
         "improper_types": 0,
         "starting_A": 400,
         "starting_A2": 0,
-        "starting_B": 1000,
+        "starting_B": 600,
         "charged_atoms": true
     },
     "species": [
