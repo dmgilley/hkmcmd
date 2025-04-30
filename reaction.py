@@ -146,8 +146,9 @@ def get_PSSrxns(
 
     # If the windowsize_slope exceeds the current number of MDMC cycles,
     # return an empty list. By definition, no reaction can be at PSS.
-    if windowsize_slope > len(system_state_summary_df):
-        return []
+    #if windowsize_slope > len(system_state_summary_df):
+    #    return []
+    windowsize_slope = np.min([windowsize_slope, len(system_state_summary_df)])
 
     # Reset the windowsize_rxnselection if it is greater than the length of
     # the system_state_df df.
