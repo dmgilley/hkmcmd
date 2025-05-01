@@ -350,7 +350,7 @@ def get_cycles_of_constant_slope(
         return 0
 
     # Adjust the steps
-    steps = number_of_windows + windowsize_slope - 1
+    steps = int(number_of_windows + windowsize_slope - 1)
     if steps > len(particle_count):
         steps = len(particle_count)
     particle_count = particle_count[-steps:]

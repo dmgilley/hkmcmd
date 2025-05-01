@@ -130,7 +130,7 @@ def main(argv):
                 system_data.scaling_reaction["windowsize_rxnselection"],
                 system_data.scaling_reaction["concentration_slope"],
                 system_data.scaling_reaction["concentration_cycles"],
-                system_data.scaling_reaction["rxnselection_count"],
+                system_data.scaling_reaction["reaction_selection_count"],
             )
             reaction_scaling_df = scalerxns(
                 reaction_scaling_df,
