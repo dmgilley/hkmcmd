@@ -19,7 +19,7 @@ def main(argv):
     parser = hkmcmd_ArgumentParser()
     parser.add_argument(dest="starting_counts", type=str, help="Starting counts for each species.")
     parser.add_argument("-steps", dest="steps", type=int, default=100_000, help="Number of steps to run.")
-    parser.add_argument("-dump_every", dest="dump_every", type=int, default=25_000, help="Number of steps to dump every.")
+    parser.add_argument("-dump_every", dest="dump_every", type=int, default=1_000, help="Number of steps to dump every.")
     args = parser.parse_args()
     starting_counts = args.starting_counts.split()
     starting_counts = {starting_counts[i]:int(starting_counts[i+1]) for i in range(0, len(starting_counts), 2)}
@@ -67,6 +67,7 @@ def main(argv):
             dump_every = steps - step_idx
         counts, times = run_kmc(counts, rates, change, dump_every, times)
         compound = np.concatenate((counts[1:], times[1:]), axis=1)
+        compound = compound[-1,:].reshape(1,-1)
         with open(filename_output, "ab") as f:
             np.savetxt(f, compound, fmt=["%6d"]*len(species_names) + ["%14.8e"], delimiter="  ", newline="\n  ")
         counts = counts[-1,:].reshape(1,-1)
