@@ -39,6 +39,11 @@ def main(argv):
     parser = hkmcmd_ArgumentParser()
     args = parser.parse_args()
 
+    # set debugger
+    my_debugger = lambda: None
+    if args.debug is True:
+        my_debugger = breakpoint
+
     # Read and clean the system data file
     system_data = SystemData(args.system, args.prefix, filename_json=args.filename_json)
     system_data.read_json()
@@ -48,8 +53,7 @@ def main(argv):
             system_data.hkmcmd["temperature_rxn"], method="Arrhenius"
         )
 
-    if args.debug is True:
-        breakpoint()
+    my_debugger()
 
     # Read the data file
     (
@@ -98,8 +102,7 @@ def main(argv):
         molecule.kind = system_state.get_molecule_kind(molecule.ID)
         molecule.assign_voxel_idx(voxels_datafile)
 
-    if args.debug is True:
-        breakpoint()
+    my_debugger()
 
     # Read in the diffusion rate dictionary holding the diffusion rates matrix for each species
     diffusion_rates_dict_matrix = {
@@ -117,8 +120,16 @@ def main(argv):
 
         # Assemble DataFrames from the system_state instance.
         # Later, the functions that use these DataFrames can be updated to take the system_state instance.
-        reaction_scaling_df = system_state.assemble_reaction_scaling_df()
-        progression_df = system_state.assemble_progression_df(sorted([molecule.kind for molecule in system_data.species]))
+        total_window = np.max([
+            system_data.scaling_reaction["windowsize_slope"],
+            system_data.scaling_reaction["windowsize_rxnselection"],
+            system_data.scaling_reaction["windowsize_scalingpause"],
+        ])
+        reaction_scaling_df = system_state.assemble_reaction_scaling_df(total_window=total_window)
+        progression_df = system_state.assemble_progression_df(
+            sorted([molecule.kind for molecule in system_data.species]),
+            total_window=total_window
+        )
 
         # Perform reaction scaling, if requested.
         if system_data.hkmcmd["scale_rates"] is True:
@@ -141,6 +152,8 @@ def main(argv):
                 rxnlist="all",
             )
 
+        my_debugger()
+
         # Assmeble a list of all possible reactions
         reactive_events_list = get_reactive_events_list(
             molecules_list,
@@ -150,6 +163,8 @@ def main(argv):
             system_data.hkmcmd["diffusion_cutoff"],
             avoid_double_counts=system_data.hkmcmd["avoid_double_counts"],
         )
+        
+        my_debugger()
 
         # Select a reaction
         reactive_event, dt = kMC_event_selection(reactive_events_list)
@@ -160,6 +175,8 @@ def main(argv):
                 if reaction.kind == reactive_event.kind
             ][0]
         )
+
+        my_debugger()
 
         # Update the system with the selected reaction
         molecules_list = update_molecules_list_with_reaction(
@@ -182,6 +199,8 @@ def main(argv):
         ):
             Reacting = False
 
+        my_debugger()
+
     # Write the system_state file
     system_state.write_to_json(args.filename_system_state)
 
@@ -190,8 +209,7 @@ def main(argv):
         get_interactions_lists_from_molcules_list(molecules_list)
     )
 
-    if args.debug is True:
-        breakpoint()
+    my_debugger()
 
     write_lammps_data(
         args.prefix + ".in.data",

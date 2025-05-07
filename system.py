@@ -198,16 +198,27 @@ class SystemState:
             raise ValueError(f"molecule_ID {molecule_ID} not found in SystemState.molecule_IDs")
         return self.molecule_kinds[-1,np.argwhere(self.molecule_IDs[-1,:] == molecule_ID)[0]][0]
 
-    def assemble_reaction_scaling_df(self):
+    def assemble_reaction_scaling_df(
+        self,
+        total_window=None
+    ):
+        if total_window is None:
+            total_window = 0
         return pd.DataFrame(
-            data=self.reaction_scalings,
-            index=self.reactive_steps,
+            data=self.reaction_scalings[-total_window:, :],
+            index=self.reactive_steps[-total_window:],
             columns=self.reaction_kinds,
         )
 
-    def assemble_progression_df(self, species_kinds):
+    def assemble_progression_df(
+        self,
+        species_kinds,
+        total_window=None
+    ):
+        if total_window is None:
+            total_window = 0
         _dict = {}
-        stacked_molecules = np.stack([self.molecule_IDs, self.molecule_kinds], axis=2)
+        stacked_molecules = np.stack([self.molecule_IDs[-total_window:, :], self.molecule_kinds[-total_window:, :]], axis=2)
         ID_kind_counts = [
             np.unique(np.unique(step, axis=0)[:, 1], return_counts=True)
             for step in stacked_molecules
@@ -220,13 +231,13 @@ class SystemState:
             for kind in species_kinds
         })
         _dict.update({
-            "time": self.times
+            "time": self.times[-total_window:]
         })
         _dict.update({
-            reaction_kind: self.reaction_selections[:,idx]
+            reaction_kind: self.reaction_selections[-total_window:,idx]
             for idx,reaction_kind in enumerate(self.reaction_kinds)
         })
-        return pd.DataFrame(_dict, index=self.reactive_steps)
+        return pd.DataFrame(_dict, index=self.reactive_steps[-total_window:])
 
     def update_molecules(self, molecules_list):
         _map = {atom_ID: idx for idx,atom_ID in enumerate(self.atom_IDs)}
