@@ -74,7 +74,7 @@ def main(argv):
         warnings.warn(f"rs@md[rate] reset the following settings: {issues}.")
 
     # Calculate reaction window time
-    rxn_dt = system_data.MD_cycling["run_steps"][3] * system_data.MD_cycling["run_stepsize"][3] * system_data.lammps["time_conversion"]
+    rxn_dt = system_data.lammps["diffusion_time"] * system_data.lammps["time_conversion"]
 
     # Read the data file
     (
