@@ -28,6 +28,7 @@ def summarize_system_state(system, prefix):
     Returns:
     None
     """
+
     # Read the system data and state
     system_data = SystemData(system, f"{prefix}")
     system_data.read_json()
@@ -42,8 +43,11 @@ def summarize_system_state(system, prefix):
     count_array = np.zeros((system_state.molecule_kinds.shape[0], len(species_list)), dtype=int)
     for idx, kind in enumerate(species_list):
         count_array[:, idx] = np.sum(system_state.molecule_kinds == kind, axis=1)
-    reaction_selections = np.array([system_state.reaction_kinds[np.argwhere(row == 1)[0]][0] for row in system_state.reaction_selections[1:]], dtype=int)
-    reaction_selections = np.insert(reaction_selections, 0, 0).reshape(-1,1)
+    try:
+        reaction_selections = np.array([system_state.reaction_kinds[np.argwhere(row == 1)[0]][0] for row in system_state.reaction_selections[1:]], dtype=int)
+        reaction_selections = np.insert(reaction_selections, 0, 0).reshape(-1,1)
+    except:
+        reaction_selections = np.zeros((diffusion_cycles.shape))
     times = system_state.times.reshape(-1,1)
     data = np.hstack((diffusion_cycles, reaction_cycles, count_array, reaction_selections, times))
 
