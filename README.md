@@ -1,3 +1,24 @@
+# Installation Guide
+
+Step 1: Get yourself a conda environment with all the necessary dependencies
+```
+cd hybrid_mdmc
+conda env create -f environment.yaml
+conda activate hkmcmd
+```
+
+Step 2: Do a local pip installation of the hybrid MDMC module
+(NOTE: The `-e` option will allow for an editable installation, if you expect to tweak the code base)
+```
+pip install -e .
+```
+
+Step 3: Make sure all the tests are passing
+```
+python -m unittest discover -s tests
+```
+
+Step 4: Try running the example notebooks. You should be able to execute them from anywhere on your machine, so long as the conda environment is properly activated.
 
 ------------------
 Naming Conventions

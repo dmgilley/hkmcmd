@@ -1,0 +1,11 @@
+name: hkmcmd
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pip
+  - setuptools
+  - scipy
+  - pandas
+  - ipython
+  - scikit-learn
