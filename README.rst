@@ -161,6 +161,7 @@ PREFIX.msd.txt
 * mean (squared) displacement of each molecule time
 * generated with hkmcmd.MSD.py
 
+===========
 Quick Start
 ===========
 
@@ -240,7 +241,7 @@ HkMCMD is built as a wrapper that operates around an MD engine. Current function
         SYSTEM.json              > hkmcmd.summarize.py > PREFIX.summary.txt
         PREFIX.system_state.json
 
-
+=================
 /examples/kmctoy/
 =================
 
