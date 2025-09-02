@@ -1,11 +1,21 @@
-name: hkmcmd
+
+name: hkmcmd-env
+
 channels:
   - conda-forge
+
 dependencies:
-  - python
+
+  # Core interpreter
+  - python=3.10
+
+  # Developer tools
   - pip
-  - setuptools
-  - scipy
-  - pandas
-  - ipython
-  - scikit-learn
+  - jupyter
+  - pytest
+  - black
+  - mypy
+
+  # Install your package + deps from pyproject.toml
+  - pip:
+      - -e .

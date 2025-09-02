@@ -7,7 +7,7 @@
 import unittest
 import numpy as np
 from copy import deepcopy
-from hybrid_mdmc.utility import *
+from hkmcmd.utility import isfloat_str, unwrap_coordinates
 
 
 class Testutility(unittest.TestCase):

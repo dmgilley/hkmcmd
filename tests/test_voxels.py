@@ -7,14 +7,11 @@
 import unittest
 import numpy as np
 from copy import deepcopy
-from hybrid_mdmc.voxels import (
+from hkmcmd.voxels import (
     Voxels,
     canonicalize_voxel_inputs,
     create_voxel_boundaries_dictionary,
     calculate_shaft_overlap_idxs_1D,
-    find_voxel_neighbors_with_shaft_overlap_method,
-    assign_voxel_idx_to_given_COG,
-    get_voxel_distance_groupings,
 )
 
 

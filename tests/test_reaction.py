@@ -8,12 +8,8 @@ import unittest
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-from hybrid_mdmc.system import SystemData
-from hybrid_mdmc.filehandlers import (
-    parse_data_file,
-)
-from hybrid_mdmc.interactions import *
-from hybrid_mdmc.reaction import *
+from hkmcmd import system, io, interactions
+from hkmcmd.reaction import get_reactive_events_list, kMC_event_selection
 
 
 class TestReaction(unittest.TestCase):
@@ -21,7 +17,7 @@ class TestReaction(unittest.TestCase):
     def setUp(self):
 
         # Read and clean the system data file
-        self.system_data = SystemData("fiction", "fiction")
+        self.system_data = system.SystemData("fiction", "fiction")
         self.system_data.read_json()
         self.system_data.clean()
         for reaction in self.system_data.reactions:
@@ -36,12 +32,12 @@ class TestReaction(unittest.TestCase):
             impropers_list,
             box,
             _,
-        ) = parse_data_file(
+        ) = io.parse_data_file(
             "fiction.in.data",
             atom_style="full",
         )
         self.molecules_list = [
-            Molecule(ID=mID)
+            interactions.Molecule(ID=mID)
             for mID in sorted(list(set([atom.molecule_ID for atom in atoms_list])))
         ]
 
@@ -208,9 +204,9 @@ class TestReaction(unittest.TestCase):
     def test_kMC_event_selection(self):
 
         event_list = [
-            Reaction(ID=1,event_rate=0.0),
-            Reaction(ID=2,event_rate=1e2),
-            Reaction(ID=3,event_rate=1e3),
+            interactions.Reaction(ID=1,event_rate=0.0),
+            interactions.Reaction(ID=2,event_rate=1e2),
+            interactions.Reaction(ID=3,event_rate=1e3),
         ]
         event_selection = [0]*1000
         time = [0]*1000

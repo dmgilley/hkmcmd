@@ -7,19 +7,17 @@
 import unittest
 import numpy as np
 from copy import deepcopy
-from hybrid_mdmc.system import SystemData
-from hybrid_mdmc.voxels import Voxels
-from hybrid_mdmc.filehandlers import parse_data_file
-from hybrid_mdmc.interactions import *
+from hkmcmd import system, voxels, io
+from hkmcmd.interactions import Atom, Molecule, IntraMode
 
 
 class TestAtom(unittest.TestCase):
 
-    atom = Atom(ID=1, x=0.0, y=0.0, z=0.0)
+    atom =Atom(ID=1, x=0.0, y=0.0, z=0.0)
 
     def test_init(self):
         with self.assertRaises(ValueError):
-            Atom(ID=-1)
+           Atom(ID=-1)
         return
 
     def test_wrap(self):
@@ -38,7 +36,7 @@ class TestAtom(unittest.TestCase):
 
 class TestMolecule(unittest.TestCase):
 
-    system_data = SystemData("combustion", "combustion")
+    system_data = system.SystemData("combustion", "combustion")
     system_data.read_json()
     system_data.clean()
     methanol, oxygen, water, carbon_dioxide = system_data.species
@@ -50,7 +48,7 @@ class TestMolecule(unittest.TestCase):
         impropers_list,
         box,
         _,
-    ) = parse_data_file(
+    ) = io.parse_data_file(
         "combustion.in.data",
         atom_style="full",
     )
@@ -77,9 +75,9 @@ class TestMolecule(unittest.TestCase):
 
     def test_spatial_changes(self):
         """Tests unwrap_atomic_coordinates, calculate_cog, assign_voxel_idx, translate, and rotate"""
-        atom1 = Atom(ID=1, x=0.0, y=0.0, z=0.0)
-        atom2 = Atom(ID=2, x=-2.0, y=-2.0, z=-2.0)
-        atom3 = Atom(ID=3, x=2.0, y=2.0, z=2.0)
+        atom1 =Atom(ID=1, x=0.0, y=0.0, z=0.0)
+        atom2 =Atom(ID=2, x=-2.0, y=-2.0, z=-2.0)
+        atom3 =Atom(ID=3, x=2.0, y=2.0, z=2.0)
         molecule = Molecule(ID=1, atoms=[atom1, atom2, atom3])
 
         # unwrap to no effect
@@ -125,24 +123,24 @@ class TestMolecule(unittest.TestCase):
 
         # test assign_voxel_idx
         box = [[-3, 3], [0, 8], [2, 5]]
-        voxels = Voxels(box=box, number_of_voxels=[3, 4, 3])
-        atom1 = Atom(ID=1, x=-2.0, y=1.7, z=1.0)
-        atom2 = Atom(ID=2, x=0.0, y=2.3, z=4.0)
+        voxels = voxels.Voxels(box=box, number_of_voxels=[3, 4, 3])
+        atom1 =Atom(ID=1, x=-2.0, y=1.7, z=1.0)
+        atom2 =Atom(ID=2, x=0.0, y=2.3, z=4.0)
         molecule = Molecule(ID=1, atoms=[atom1, atom2])
         molecule.assign_voxel_idx(voxels)
         molecule.assign_voxel_idx(voxels)
         self.assertEqual(molecule.voxel_idx[0], 17)
-        atom1 = Atom(ID=1, x=-2.0, y=1.7, z=0.999999)
-        atom2 = Atom(ID=2, x=0.0, y=2.3, z=4.0)
+        atom1 =Atom(ID=1, x=-2.0, y=1.7, z=0.999999)
+        atom2 =Atom(ID=2, x=0.0, y=2.3, z=4.0)
         molecule = Molecule(ID=1, atoms=[atom1, atom2])
         molecule.assign_voxel_idx(voxels)
         molecule.assign_voxel_idx(voxels)
         self.assertEqual(molecule.voxel_idx[0], 16)
 
         # test translate
-        atom1 = Atom(ID=1, x=0.0, y=0.0, z=0.0)
-        atom2 = Atom(ID=2, x=-2.0, y=-2.0, z=-2.0)
-        atom3 = Atom(ID=3, x=2.0, y=2.0, z=2.0)
+        atom1 =Atom(ID=1, x=0.0, y=0.0, z=0.0)
+        atom2 =Atom(ID=2, x=-2.0, y=-2.0, z=-2.0)
+        atom3 =Atom(ID=3, x=2.0, y=2.0, z=2.0)
         molecule = Molecule(ID=1, atoms=[atom1, atom2, atom3])
         molecule.calculate_cog()
         self.assertEqual(np.all(molecule.cog), np.all(np.array([0.0, 0.0, 0.0])))
@@ -166,20 +164,20 @@ class TestMolecule(unittest.TestCase):
 
     def test_ID_adjustments(self):
         """Tests adjust_IDs, adjust_atom_IDs, adjust_intramode_IDs, and clean_IDs"""
-        atom1 = Atom(ID=3, x=0.0, y=0.0, z=0.0)
-        atom2 = Atom(ID=1, x=0.0, y=0.0, z=2.0)
-        atom3 = Atom(ID=9, x=0.0, y=0.0, z=2.0)
-        atom4 = Atom(ID=5, x=0.0, y=0.0, z=2.0)
-        atom5 = Atom(ID=8, x=0.0, y=0.0, z=2.0)
+        atom1 =Atom(ID=3, x=0.0, y=0.0, z=0.0)
+        atom2 =Atom(ID=1, x=0.0, y=0.0, z=2.0)
+        atom3 =Atom(ID=9, x=0.0, y=0.0, z=2.0)
+        atom4 =Atom(ID=5, x=0.0, y=0.0, z=2.0)
+        atom5 =Atom(ID=8, x=0.0, y=0.0, z=2.0)
         molecule = Molecule(
             ID=5,
             kind="fiction",
             atoms=[
-                Atom(ID=3, lammps_type=1, x=0.0, y=0.0, z=0.0),
-                Atom(ID=1, lammps_type=5, x=1.0, y=0.0, z=0.0),
-                Atom(ID=9, lammps_type=5, x=2.0, y=0.0, z=0.0),
-                Atom(ID=5, lammps_type=2, x=3.0, y=0.0, z=0.0),
-                Atom(ID=8, lammps_type=9, x=2.0, y=0.0, z=1.0),
+               Atom(ID=3, lammps_type=1, x=0.0, y=0.0, z=0.0),
+               Atom(ID=1, lammps_type=5, x=1.0, y=0.0, z=0.0),
+               Atom(ID=9, lammps_type=5, x=2.0, y=0.0, z=0.0),
+               Atom(ID=5, lammps_type=2, x=3.0, y=0.0, z=0.0),
+               Atom(ID=8, lammps_type=9, x=2.0, y=0.0, z=1.0),
             ],
             bonds=[
                 IntraMode(ID=8, kind=1, atom_IDs=[3, 1]),

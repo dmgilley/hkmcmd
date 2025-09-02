@@ -6,10 +6,10 @@
 
 import unittest
 import numpy as np
+import pandas as pd
 from copy import deepcopy
-from hybrid_mdmc.interactions import get_interactions_lists_from_molcules_list
-from hybrid_mdmc.filehandlers import parse_data_file
-from hybrid_mdmc.system import *
+from hkmcmd import interactions, io
+from hkmcmd.system import SystemData, SystemState
 
 
 class TestSystemState(unittest.TestCase):
@@ -34,12 +34,12 @@ class TestSystemState(unittest.TestCase):
             impropers_list,
             box,
             _,
-        ) = parse_data_file(
+        ) = io.parse_data_file(
             "fiction.in.data",
             atom_style="full",
         )
         self.molecules_list = [
-            Molecule(ID=mID)
+            interactions.Molecule(ID=mID)
             for mID in sorted(list(set([atom.molecule_ID for atom in atoms_list])))
         ]
 
@@ -62,7 +62,7 @@ class TestSystemState(unittest.TestCase):
 
     def test_check_atoms_list(self):
 
-        atoms_list = (get_interactions_lists_from_molcules_list(self.molecules_list))[0]
+        atoms_list = (interactions.get_interactions_lists_from_molcules_list(self.molecules_list))[0]
         check = self.system_state.check_atoms_list(atoms_list)
         self.assertIs(check, True)
 
