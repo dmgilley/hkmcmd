@@ -11,14 +11,14 @@ Requirements
 * NumPy_ 2.2 or newer
 * SciPy_ 1.15 or newer
 * Pandas_ 2.2 or newer
-* Sckit-learn_ 1.6 or newer
+* Scikit-learn_ 1.6 or newer
 * Matplotlib_ 3.10 or newer
 
 .. _Python: https://www.python.org/
 .. _NumPy: https://docs.scipy.org/doc/numpy/reference/
 .. _SciPy: https://docs.scipy.org/doc/scipy/reference/
 .. _Pandas: https://pandas.pydata.org/
-.. _Scikit-learn: https://scikit-learn.org/stable/
+.. _Scikit-learn: https://scikit-learn.org/
 .. _Matplotlib: https://matplotlib.org/
 
 Installation From Source
@@ -87,79 +87,79 @@ Files
 general HkMCMD
 ==============
 
-1. SYSTEM.json
+SYSTEM.json
 
-    * user-created prior to simulation
-    * main settings file that holds all information needed to perform HkMCMD
+* user-created prior to simulation
+* main settings file that holds all information needed to perform HkMCMD
 
-2. PREFIX.system_state.json
+PREFIX.system_state.json
 
-    * created with hkmcmd.initialize.py, updated at the end of every call to hkmcmd.run.hkmcmd.py
-    * contains information regarding the state of the system at each reactive step
-    * e.g. the molecule assignment and molecule type of each atom at every reactive step
+* created with hkmcmd.initialize.py, updated at the end of every call to hkmcmd.run.hkmcmd.py
+* contains information regarding the state of the system at each reactive step
+* e.g. the molecule assignment and molecule type of each atom at every reactive step
 
-3. PREFIX.summary.txt
+PREFIX.summary.txt
 
-    * created with hkmcmd.summarize.py
-    * summarizes the system state at each reactive step
-    * e.g. instead of listing every atom's molecule ID and molecule type, it lists the total number of each type of molecule
-    * allows for fairly detailed analysis while significantly decreasing the size of file that must be transfered around and read by the analysis scripts
+* created with hkmcmd.summarize.py
+* summarizes the system state at each reactive step
+* e.g. instead of listing every atom's molecule ID and molecule type, it lists the total number of each type of molecule
+* allows for fairly detailed analysis while significantly decreasing the size of file that must be transfered around and read by the analysis scripts
 
 Molecular Dynamics
 ==================
 
-1. PREFIX.in.init
+PREFIX.in.init
 
-    * LAMMPS formatted input script detailing the MD run
-    * created with hkmcmd.initialize.py, and overwritten every time hkmcmd.run.hkmcmd.py is called
+* LAMMPS formatted input script detailing the MD run
+* created with hkmcmd.initialize.py, and overwritten every time hkmcmd.run.hkmcmd.py is called
 
-2. PREFIX.in.data
+PREFIX.in.data
 
-    * LAMMPS formatted data file containing particle-specific information (position, molecule ID, bonds, etc.)
-    * created with hkmcmd.initialize.py, and *overwritten every time hkmcmd.run.hkmcmd.py is called*
+* LAMMPS formatted data file containing particle-specific information (position, molecule ID, bonds, etc.)
+* created with hkmcmd.initialize.py, and *overwritten every time hkmcmd.run.hkmcmd.py is called*
 
-3. PREFIX.end.data
+PREFIX.end.data
 
-    * LAMMPS formatted data file containing particle-specific information (position, molecule ID, bonds, etc.)
-    * created by LAMMPS at the end of an MD simulation
+* LAMMPS formatted data file containing particle-specific information (position, molecule ID, bonds, etc.)
+* created by LAMMPS at the end of an MD simulation
 
-4. PREFIX.diffusion.lammpstrj
+PREFIX.diffusion.lammpstrj
 
-    * LAMMPS "dump" file containing particle information at specified steps (position, velocity, etc.)
-    * created by LAMMPS during MD simulation
+* LAMMPS "dump" file containing particle information at specified steps (position, velocity, etc.)
+* created by LAMMPS during MD simulation
 
-5. various others not used by HkMCMD, but potentially useful to diagnostics
+various others not used by HkMCMD, but potentially useful to diagnostics
 
-    * **NOTE:** all LAMMPS files used by/created from the initial MD run (i.e. prior to the HkMCMD loop) are copied as PREFIX_prep.* for diagnostic purposes
+* **NOTE:** all LAMMPS files used by/created from the initial MD run (i.e. prior to the HkMCMD loop) are copied as PREFIX_prep.* for diagnostic purposes
 
 Diffusion Scaling
 =================
 
-1. PREFIX.difusion.txt
+PREFIX.difusion.txt
 
-    * calculated diffusion rates between all system voxels
-    * generated with hkmcmd.diffusion.py
-    * can be appended on each diffusive cycle
+* calculated diffusion rates between all system voxels
+* generated with hkmcmd.diffusion.py
+* can be appended on each diffusive cycle
 
-2. PREFIX.diffusion.log
+PREFIX.diffusion.log
 
-    * log file for tracking calculation of diffusion rates
-    * generated with hkmcmd.diffusion.py
+* log file for tracking calculation of diffusion rates
+* generated with hkmcmd.diffusion.py
 
-3. PREFIX.direct_transition_rates.txt
+PREFIX.direct_transition_rates.txt
 
-    * direct transition rates between voxels
-    * generated with hkmcmd.diffusion.py
+* direct transition rates between voxels
+* generated with hkmcmd.diffusion.py
 
-4. PREFIX.mvabfa.txt
+PREFIX.mvabfa.txt
 
-    * "molecular voxel assignment by frame array" file; holds the voxel ID in which each molecule resides per frame
-    * gerenated with hkmcmd.diffusion.py
+* "molecular voxel assignment by frame array" file; holds the voxel ID in which each molecule resides per frame
+* gerenated with hkmcmd.diffusion.py
 
-5. PREFIX.msd.txt
+PREFIX.msd.txt
 
-    * mean (squared) displacement of each molecule time
-    * generated with hkmcmd.MSD.py
+* mean (squared) displacement of each molecule time
+* generated with hkmcmd.MSD.py
 
 Quick Start
 ===========
@@ -169,13 +169,19 @@ HkMCMD is built as a wrapper that operates around an MD engine. Current function
 
 1. manual creation of initial MD force field file
 
+::
+
     N/A > manual creation > SYSTEM.in.settings
 
 2. manual creation of the HkMCMD settings file (this can be done using the helper notebook "create.ipynb")
 
-    N/A > manual creation *or* /examples/kmctoy/create.ipynb > SYSTEM.json
+::
+
+    N/A > manual creation OR /examples/kmctoy/create.ipynb > SYSTEM.json
 
 3. create LAMMPS input files for the initial MD run and initialize the system state file
+
+::
 
     SYSTEM.json > hkmcmd.initialize.py > PREFIX.in.data
                                          PREFIX.in.init
@@ -183,11 +189,15 @@ HkMCMD is built as a wrapper that operates around an MD engine. Current function
 
 4. run the initial MD
 
+::
+
     SYSTEM.in.settings > MD engine > PREFIX.end.data
     PREFIX.in.data                   PREFIX.diffusion.lammpstrj
     PREFIX.in.init
 
 5. calculate diffusion rates (optional)
+
+::
 
     SYSTEM.json                > hkmcmd.diffusion.py > PREFIX.diffusion.log
     PREFIX.end.data                                    PREFIX.mvabfa.txt
@@ -196,31 +206,36 @@ HkMCMD is built as a wrapper that operates around an MD engine. Current function
 
 6. calculate MSD (optional)
 
+::
+
         SYSTEM.json                > hkmcmd.MSD.py > PREFIX.msd.txt
         PREFIX.end.data
         PREFIX.diffusion.lammpstrj
 
 
 
-7. begin HkMCMD loop
+7. perform kMC reaction selections
 
-    7a. perform kMC reaction selections
+::
 
                             SYSTEM.json > hkmcmd.run.hkmcmd.py > PREFIX.system_state.json
                PREFIX.system_state.json                          PREFIX.in.date
                         PREFIX.end.data                          PREFIX.in.init
         PREFIX.diffusion.txt (optional)
 
-    7b. perform MD
+8. perform MD
+
+::
 
         SYSTEM.in.settings > MD engine > PREFIX.end.data
             PREFIX.in.data               PREFIX.diffusion.lammpstr
             PREFIX.in.init
 
-    7c. repeat step 7 until "done"
+9. repeat steps 7-8 until "done"
 
+10. create a summary file (optional)
 
-8. create a summary file (optional)
+::
 
         SYSTEM.json              > hkmcmd.summarize.py > PREFIX.summary.txt
         PREFIX.system_state.json
