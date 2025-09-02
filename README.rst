@@ -1,11 +1,10 @@
 
-
-============
 Installation
 ============
 
+
 Requirements
-============
+------------
 
 * Python_ 3.13 or newer
 * NumPy_ 2.2 or newer
@@ -22,7 +21,7 @@ Requirements
 .. _Matplotlib: https://matplotlib.org/
 
 Installation From Source
-========================
+------------------------
 
 Clone the source into your directory of choice::
 
@@ -49,13 +48,13 @@ Make sure all the tests are passing
 
 Finally, try running the example notebooks (see below).
 
-==================
+
 Naming Conventions
 ==================
+
 The naming conventions are constructed such that it is (hopefully) simple to run multiple replicates of a given system. To accomplish this, two names are used throughout, "SYSTEM" and "PREFIX." The files that describe the HkMCMD and MD settings are prepended with SYSTEM (SYSTEM.json and SYSTEM.in.settings, see below), whereas individual replicates are designated with PREFIX. As explained below, SYSTEM.json and SYSTEM.in.settings must be created manually/interactively. All other necessary files can be created with provided scripts. This naming convention thus allows for creating the two system files by hand, followed by automated creation of individual replicate files, to avoid tedious repeating of file creation. For example, if running two replicates of a methane combustion, the names could be...
 
-Replictate 1
-
+Replicate 1
 
 ::
 
@@ -63,7 +62,7 @@ Replictate 1
     PREFIX: "methane_combustion.replicate1"
 
 
-Replictate 2
+Replicate 2
 
 ::
 
@@ -80,12 +79,12 @@ If desired, SYSTEM and PREFIX can be set to the same. For example,
 
 is a perfectly acceptable option for running a single replicate of HkMCMD to simulate a Solid Electrolyte Interphase.
 
-=====
+
 Files
 =====
 
 general HkMCMD
-==============
+--------------
 
 SYSTEM.json
 
@@ -106,7 +105,7 @@ PREFIX.summary.txt
 * allows for fairly detailed analysis while significantly decreasing the size of file that must be transfered around and read by the analysis scripts
 
 Molecular Dynamics
-==================
+------------------
 
 PREFIX.in.init
 
@@ -133,7 +132,7 @@ various others not used by HkMCMD, but potentially useful to diagnostics
 * **NOTE:** all LAMMPS files used by/created from the initial MD run (i.e. prior to the HkMCMD loop) are copied as PREFIX_prep.* for diagnostic purposes
 
 Diffusion Scaling
-=================
+-----------------
 
 PREFIX.difusion.txt
 
@@ -161,7 +160,7 @@ PREFIX.msd.txt
 * mean (squared) displacement of each molecule time
 * generated with hkmcmd.MSD.py
 
-===========
+
 Quick Start
 ===========
 
@@ -241,7 +240,7 @@ HkMCMD is built as a wrapper that operates around an MD engine. Current function
         SYSTEM.json              > hkmcmd.summarize.py > PREFIX.summary.txt
         PREFIX.system_state.json
 
-=================
+
 /examples/kmctoy/
 =================
 
